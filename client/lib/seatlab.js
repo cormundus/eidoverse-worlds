@@ -20,28 +20,6 @@ const _q = new THREE.Quaternion();
 const _box = new THREE.Box3();
 const _a = new THREE.Vector3();
 
-/** Deterministically COMPOSE a mounted rider the way the frame loop would —
- *  apply the seat's sit pose, settle the mixer, place the root at the socket
- *  — so a measurement doesn't depend on rAF having run (the browser pane may
- *  be hidden; and the numbers must be reproducible, not timing-dependent).
- *  Read-only intent: it drives the same code the renderer drives, nothing
- *  more. `settleMs`/`steps` advance the VRM mixer into the sit pose. */
-export function composeSeat(riderId, { settleMs = 400, steps = 24 } = {}) {
-  const m = avatarMounts.get(riderId);
-  const rec = remotes.get(riderId);
-  const avatar = rec?.avatar;
-  if (!m || !avatar) return false;
-  const sock = comps.get(m.to)?.sockets?.[m.slot];
-  avatar.setClip?.(sock?.pose ?? 'sitchair');
-  const dt = (settleMs / 1000) / steps;
-  for (let i = 0; i < steps; i++) avatar.update?.(dt, performance.now());
-  const sw = mountTransform(riderId, _a);
-  if (sw) { avatar.root.position.copy(_a); avatar.root.rotation.y = sw.yaw; }
-  avatar.vrm?.update?.(0);
-  avatar.root.updateWorldMatrix(true, true);
-  return true;
-}
-
 /** Measure one mounted rider. `localAvatar` supplies the browser-local
  *  body's avatar wrapper when measuring yourself (remotes only hold the
  *  others). Returns a plain JSON-able record, or {error}. */
@@ -108,48 +86,97 @@ export function measureAllSeats(opts = {}) {
   return [...avatarMounts.keys()].map((id) => measureSeat(id, opts));
 }
 
-/** RIG-INTRINSIC sit geometry — the quantity that actually produces the
- *  hover, isolated from world, mount and entity scale (Mica's amendment:
- *  show the landmark candidates; a hips origin may be metadata, not a seat).
- *  Places the avatar's root at the origin with identity transform, applies
- *  the seat's sit pose with the mixer settled, and reads each landmark's Y
- *  in ROOT-LOCAL metres. The seat mechanic is "root goes to the socket"
- *  (remotes.js), so each landmark's root-local Y IS its signed gap above
- *  the authored seat once mounted. Restores the transform after. */
-export function measureRigIntrinsic(avatar, { pose = 'sitchair', settleMs = 600, steps = 36 } = {}) {
-  if (!avatar?.root) return { error: 'no avatar' };
-  const vrm = avatar.vrm ?? null;
-  const humanoid = !!vrm?.humanoid;
-  const root = avatar.root;
-  // snapshot + neutralize the root frame so world Y == root-local Y
-  const savePos = root.position.clone(), saveRot = root.rotation.clone(), saveScl = root.scale.clone();
-  root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); root.scale.set(1, 1, 1);
+// ---- the detached lab (#101 Phase A, revised per Mica review) ---------------
+// Measurements happen on instances the lab OWNS — constructed, pulled
+// off-scene, measured, disposed. No live resident is ever posed, re-clipped
+// or moved: the passive measureSeat above only reads, and everything below
+// touches only lab-created bodies (review B1).
 
-  avatar.setClip?.(pose);
-  const clipReady = !!avatar.actions?.[pose] || !!avatar.actions?.sit;
+import { scene } from './core.js';
+import { makeAvatar } from './avatar.js';
+
+/** Measure one avatar instance's sit-pose geometry, with full animation
+ *  receipts (review B2) and a MEASURED contact candidate (review B3): the
+ *  lowest skinned vertex among those weighted ≥ minWeight to the pelvis
+ *  bone set, under the settled pose — an actual support surface, not a
+ *  joint origin. Root is neutralized to the origin, so every Y is
+ *  root-local = the signed gap above an authored seat once mounted.
+ *  The caller owns `av` and its lifecycle; `labRig` below does both. */
+export function labAvatar(av, { pose = 'sitchair', settleMs = 1200, steps = 72 } = {}) {
+  if (!av?.root) return { error: 'no avatar' };
+  const vrm = av.vrm ?? null;
+  if (!vrm?.humanoid) {
+    // the legible refusal (review receipt 6): no humanoid mapping means no
+    // seat landmark exists to derive — say so, never guess
+    return { rig: 'unsupported', refusal: 'no humanoid mapping — no seat landmark derivable' };
+  }
+  av.root.position.set(0, 0, 0); av.root.rotation.set(0, 0, 0); av.root.scale.set(1, 1, 1);
+
+  // ---- animation receipts: what ACTUALLY produced this skeleton -----------
+  av.setClip(pose);
+  const actual = av.currentSlot;
+  const action = av.actions[actual] ?? null;
+  if (action) { action.time = 0; }               // known phase: start of clip
   const dt = (settleMs / 1000) / steps;
-  for (let i = 0; i < steps; i++) avatar.update?.(dt, performance.now());
-  vrm?.update?.(0);
-  root.updateWorldMatrix(true, true);
-
-  const yOf = (node) => { if (!node) return null; node.updateWorldMatrix(true, false); return +node.getWorldPosition(_v).y.toFixed(4); };
-  const bone = (n) => vrm?.humanoid?.getRawBoneNode?.(n) ?? null;
-  const out = {
-    rig: humanoid ? 'vrm-humanoid' : 'unsupported',
-    pose, clipReady,
-    landmarks: {
-      root: 0,
-      hips: yOf(bone('hips')),
-      spine: yOf(bone('spine')),
-      leftUpperLeg: yOf(bone('leftUpperLeg')),
-      leftFoot: yOf(bone('leftFoot')),
-      head: yOf(bone('head')),
-    },
+  for (let i = 0; i < steps; i++) av.update(dt, 0);
+  vrm.update?.(0);
+  av.root.updateWorldMatrix(true, true);
+  const anim = {
+    requestedPose: pose,
+    actualSlot: actual,
+    fallback: actual !== pose,
+    available: { sitchair: !!av.actions.sitchair, sit: !!av.actions.sit, idle: !!av.actions.idle },
+    actionTime: action ? +action.time.toFixed(4) : null,
+    actionWeight: action ? +action.getEffectiveWeight().toFixed(4) : null,
   };
-  _box.setFromObject(vrm?.scene ?? root);
-  out.bounds = { minY: +_box.min.y.toFixed(4), maxY: +_box.max.y.toFixed(4), height: +(_box.max.y - _box.min.y).toFixed(4) };
 
-  root.position.copy(savePos); root.rotation.copy(saveRot); root.scale.copy(saveScl);
-  root.updateWorldMatrix(true, true);
-  return out;
+  // ---- landmarks (bone origins — context, not contact) --------------------
+  const yOf = (n) => { const b = vrm.humanoid.getRawBoneNode?.(n); if (!b) return null; b.updateWorldMatrix(true, false); return +b.getWorldPosition(_v).y.toFixed(4); };
+  const landmarks = { root: 0, hips: yOf('hips'), spine: yOf('spine'),
+    leftUpperLeg: yOf('leftUpperLeg'), leftFoot: yOf('leftFoot'), head: yOf('head') };
+
+  // ---- the measured contact candidate (skinned pelvis underside) ----------
+  const pelvis = ['hips', 'leftUpperLeg', 'rightUpperLeg']
+    .map((n) => vrm.humanoid.getRawBoneNode?.(n)).filter(Boolean);
+  let contactY = Infinity, sampled = 0, meshes = 0;
+  const minWeight = 0.5;
+  vrm.scene.traverse((o) => {
+    if (!o.isSkinnedMesh) return;
+    const boneIdx = new Set(pelvis.map((b) => o.skeleton.bones.indexOf(b)).filter((i) => i >= 0));
+    if (!boneIdx.size) return;
+    meshes++;
+    const si = o.geometry.getAttribute('skinIndex'), sw = o.geometry.getAttribute('skinWeight');
+    for (let i = 0; i < si.count; i++) {
+      let w = 0;
+      for (let k = 0; k < 4; k++) if (boneIdx.has(si.getComponent(i, k))) w += sw.getComponent(i, k);
+      if (w < minWeight) continue;
+      o.getVertexPosition(i, _v).applyMatrix4(o.matrixWorld);   // skinned, root-local (root at origin)
+      sampled++;
+      if (_v.y < contactY) contactY = _v.y;
+    }
+  });
+  _box.setFromObject(vrm.scene);
+  const bounds = { minY: +_box.min.y.toFixed(4), maxY: +_box.max.y.toFixed(4) };
+  const contact = sampled
+    ? { seatContactY: +contactY.toFixed(4), sampledVerts: sampled, meshes,
+        plausible: contactY >= _box.min.y - 0.1 && contactY <= _box.max.y }
+    : { error: 'no pelvis-weighted vertices found' };
+
+  return { rig: 'vrm-humanoid', anim, landmarks, contact, bounds };
+}
+
+/** Construct a DETACHED instance of an avatar, measure it `runs` times for
+ *  determinism, dispose it. Never touches the scene or any resident. */
+export async function labRig(avatarPath, { pose = 'sitchair', runs = 3 } = {}) {
+  const av = await makeAvatar(`seatlab-${Math.random().toString(36).slice(2, 8)}`, avatarPath, { urgent: true });
+  try {
+    scene.remove(av.root);
+    if (av.gaze) scene.remove(av.gaze);
+    await av.hydrateClips();                       // review B2: never measure a fallback unknowingly
+    const results = [];
+    for (let r = 0; r < runs; r++) results.push(labAvatar(av, { pose }));
+    const keys = results.map((x) => JSON.stringify(x));
+    return { avatarPath, runs, deterministic: keys.every((k) => k === keys[0]), result: results[0],
+      ...(keys.every((k) => k === keys[0]) ? {} : { allRuns: results }) };
+  } finally { av.dispose(); }
 }

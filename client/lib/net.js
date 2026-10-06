@@ -102,6 +102,18 @@ export function sendVerb(verb, args) {
   }
 }
 
+/** A drum circle phrase (instruments.js; design rev 5 §2.3–2.4) — relayed
+ *  once, never logged, always receipted. Returns whether it left this page:
+ *  a phrase is never queued for a reconnect, because a late phrase is a wrong
+ *  phrase (the hitter's UI turns an unsent hit into "local only"). */
+export function sendPhrase(data) {
+  if (net.joined && net.ws?.readyState === 1) {
+    net.ws.send(JSON.stringify({ type: 'phrase', ...data }));
+    return true;
+  }
+  return false;
+}
+
 /** A one-off animation — sent once, relayed to everyone, never logged. */
 export function sendAnim(data) {
   if (net.joined && net.ws?.readyState === 1) {
@@ -554,7 +566,12 @@ async function handle(msg) {
       teardownParticipant(msg.id);
       logChat('*', `${msg.id} left`);
       bus.emit('roster');
+      bus.emit('leave', { id: msg.id, gen: msg.gen });   // the departing leg's generation (instruments.js drops only ITS queued phrases)
       break;
+
+    // the drum circle (instruments.js): others' phrases, and receipts for ours
+    case 'phrase': bus.emit('phrase', msg); break;
+    case 'phrase-receipt': bus.emit('phrase-receipt', msg); break;
 
     case 'pose': {
       // Presence UPDATES bodies; it never creates them (#95). A pose for an

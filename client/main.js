@@ -29,6 +29,7 @@ import { initCauses } from './lib/realize/causes.js';
 import './lib/emitters.js';
 import './lib/pictures.js';
 import { tickSounds } from './lib/sounds.js';   // the sound comp: positional audio from an entity
+import { tickInstruments, tickPad, _drums } from './lib/instruments.js';   // the drum circle: phrases on the grid, the hitter's pad
 import { tickMotion } from './lib/motion.js';
 import {
   myState, updateMe, updateSpectator, setCamYaw, setPosture, togglePhotoMode,
@@ -554,6 +555,8 @@ registerSystem('sky', (dt, t, now) => updateSky(now, t));
 registerSystem('materials', (dt, t, now) => updateMaterials(now)); // weather → uniforms
 registerSystem('rig', (dt, t, now) => updateRig(now));          // light slots follow requests
 registerSystem('sounds', () => tickSounds(), { every: 2 });      // panners follow entities, the listener the camera
+registerSystem('instruments', () => tickInstruments());         // drum steps → WebAudio inside a short window (never late); hit deadlines
+registerSystem('drum-pad', () => tickPad(), { every: 6 });      // the pad appears at a drum
 registerSystem('me-drive', (dt) => {
   if (CONFIG.renderer) { /* camera is driven per snap request */ }
   else if (CONFIG.spectate) updateSpectator(dt, CONFIG.follow ? remotes.get(CONFIG.follow) : null);
@@ -832,6 +835,7 @@ globalThis.whyIsItSilent = () => {
 
 const EW = globalThis.EW = {
   me: () => getMe(), remotes, entities, myState, THREE, net, scene, camera, renderer, bus,
+  drums: _drums,   // the drum circle's state and press (instruments.js), for probes
   skyArgs, sendVerb, setPosable, get posable() { return posable(); },
   // POSING from the console — the same verbs an agent's tools have. A value
   // per bone is [x,y,z,w] or {q, t, s} (shared/humanoid.js poseChannels).

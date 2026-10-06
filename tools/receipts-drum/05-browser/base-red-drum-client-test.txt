@@ -1,0 +1,3 @@
+error: Cannot find module '../client/lib/drumsynth.js' from '$BASE_WORKTREE\tools\drum-client-test.ts'
+
+Bun v1.3.14 (Windows x64)

@@ -383,6 +383,89 @@ export function judgeLive(c, inst, msg, { now, isInitiator, policy = DRUM_POLICY
   return { ok: true, bar, step: k - bar * steps, stepIndex: k, scheduledAtServerMs: at, arrivalToGridMs: at - now, basis };
 }
 
+// ---- the hitter's side of a live hit (§2.4) ----------------------------------
+
+/** A SYNCED client's choice of step for a live press at server time `now`:
+ *  the next step at least L ahead ON THE TIMELINE AS IT WILL SOUND — the
+ *  outgoing `prev` grid's steps up to its `until`, then the current grid's.
+ *  Resolves {gen, step} (step = index from that grid's t0), or null when no
+ *  circle runs. Pure; the server judges the result (judgeLive). */
+export function chooseLiveStep(c, now, policy = DRUM_POLICY) {
+  if (!circleRunning(c)) return null;
+  const target = now + policy.L_MS;
+  const pick = (g) => Math.max(0, Math.ceil((target - g.t0) / gridOf(g).stepMs));
+  if (c.prev && target < c.prev.until) {
+    const k = pick(c.prev);
+    if (c.prev.t0 + k * gridOf(c.prev).stepMs < c.prev.until) return { gen: c.prev.gen, step: k };
+  }
+  return { gen: c.gen, step: pick(c) };
+}
+
+/** When a hit with no receipt becomes "sharing unknown" (§2.4): a synced
+ *  hitter knows its step, so its scheduled time + 1 s on its serverNow(); an
+ *  unsynced hitter sent "next" and cannot know it, so the press + L + one step
+ *  + 1 s on its own local clock. Resolves {clock: "server"|"local", at}. */
+export function sharingUnknownDeadline({ synced, scheduledAtServerMs, pressedAtLocalMs, stepMs, policy = DRUM_POLICY }) {
+  return synced
+    ? { clock: 'server', at: scheduledAtServerMs + 1000 }
+    : { clock: 'local', at: pressedAtLocalMs + policy.L_MS + stepMs + 1000 };
+}
+
+// ---- what was struck: one description for every species (§5) -----------------
+
+/** A per-voice window of the bars OBSERVED since arrival: what was struck or
+ *  queued, never what was heard. `win` is a plain object; noteStruck mutates
+ *  it. Keyed by circle generation so a tempo change never mixes grids. */
+export function newStruckWindow(observedFrom = null) { return { observedFrom, voices: {} }; }
+export function noteStruck(win, ph, { steps, keepBars = 4, mine = false } = {}) {
+  const key = `${ph.voice}`;
+  const v = (win.voices[key] ??= { authors: new Set(), bars: {} });
+  if (ph.author) v.authors.add(ph.author);
+  const put = (bar, cells) => {
+    const k = `${ph.gen}:${bar}`;
+    const prev = v.bars[k]?.cells ?? '.'.repeat(steps);
+    const merged = [...prev].map((ch, i) => (cells[i] && cells[i] !== '.' ? cells[i] : ch)).join('');
+    v.bars[k] = { gen: ph.gen, bar, cells: merged, queued: !!mine };
+  };
+  if (ph.live) put(ph.bar, '.'.repeat(ph.step) + ph.stroke + '.'.repeat(Math.max(0, steps - ph.step - 1)));
+  else for (let i = 0; i < (ph.bars ?? 1); i++) put(ph.bar + i, ph.pattern.slice(i * steps, (i + 1) * steps));
+  if (win.observedFrom === null) win.observedFrom = { gen: ph.gen, bar: ph.bar };
+  const keys = Object.keys(v.bars).sort((a, b) => (v.bars[a].gen - v.bars[b].gen) || (v.bars[a].bar - v.bars[b].bar));
+  while (keys.length > keepBars) delete v.bars[keys.shift()];
+}
+
+/** The circle in words — the SAME string on every client from the same data
+ *  (browser grid, Lite, the mcpl look line). Says what was struck or queued
+ *  and over which observed bars; never that anyone heard it; never implies a
+ *  history from before the observer arrived. */
+export function describeCircle(c, instruments, win, { now, initiatorPresent = true } = {}) {
+  if (!c) return '';
+  const meterWord = `${c.meter}/4 in ${['', 'quarters', 'eighths', 'triplets', 'sixteenths', 'quintuplets', 'sextuplets', 'septuplets', '32nds'][c.subdivision] ?? `${c.subdivision} steps per beat`}`;
+  if (c.ended) return `a drum circle (ended at gen ${c.gen})`;
+  const lines = [`a drum circle, ${c.bpm} BPM, ${meterWord} (gen ${c.gen}), started by ${c.initiator?.id ?? 'someone'}`];
+  if (!initiatorPresent) lines.push(`  the initiator has left; only the owner or an operator can change or end this circle`);
+  if (now !== undefined) {
+    const cur = barAt(c, now);
+    if (!c.prev && cur < c.countIn) lines.push(`  count-in by ${c.initiator?.id ?? 'the initiator'}, bars 0–${c.countIn - 1}; open from bar ${c.countIn}`);
+    if (c.prev && now < c.t0) {
+      const at = changeBarOf({ ...c.prev });
+      lines.push(`  tempo → ${c.bpm} BPM at bar ${at} (the new grid's bar 0); now at bar ${barAt(c.prev, now)} of gen ${c.prev.gen}`);
+    } else lines.push(`  now at bar ${cur}`);
+  }
+  const vs = Object.entries(win?.voices ?? {});
+  if (!vs.length) { lines.push(`  nothing struck or queued since you arrived`); return lines.join('\n'); }
+  const span = vs.flatMap(([, v]) => Object.values(v.bars).map((b) => b.bar));
+  lines.push(`  struck/queued, bars ${Math.min(...span)}–${Math.max(...span)} (observed since you arrived):`);
+  for (const [voice, v] of vs) {
+    const name = instruments?.[voice]?.name ?? voice;
+    const who = [...v.authors].join(', ') || '—';
+    const bars = Object.values(v.bars).sort((a, b) => (a.gen - b.gen) || (a.bar - b.bar));
+    lines.push(`    ${name} (${who}): ${bars.map((b) => b.cells + (b.queued ? '*' : '')).join('  ')}`);
+  }
+  if (vs.some(([, v]) => Object.values(v.bars).some((b) => b.queued))) lines.push(`  (* = yours, queued)`);
+  return lines.join('\n');
+}
+
 // ---- instrument-set: shape, door, fold --------------------------------------
 
 /** Shape only: drops voiceGen and ended. Resolves {ok, args} or {ok:false, why}. */

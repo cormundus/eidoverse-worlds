@@ -40,6 +40,7 @@ import { entities } from './world.js';
 import { audioContext } from './audioctx.js';
 import { playWhenAllowed } from './audiounlock.js';
 import { volumeFor } from './voiceconsent.js';
+import { worldGain, _worldBus } from './worldbus.js';   // the ONE listener-owned bus (rule 5), shared with instruments.js
 import { registerEditor } from './inspect.js';
 import { toast, flashHint } from './ui.js';
 import { guardedByOther, placerName } from './placer.js';   // the server's who-may-author rule, mirrored — by placer, never latest actor (#190)
@@ -51,21 +52,12 @@ const playing = new Map();
 export const _playing = playing;   // probes
 
 // The world bus: one gain for everything placed, set from the listener's own
-// preference. Created with the first graph (the AudioContext is lazy too).
-let worldBus = null;
-function worldGain() {
-  if (!worldBus) {
-    const ctx = audioContext();
-    worldBus = ctx.createGain();
-    worldBus.gain.value = volumeFor('world');
-    worldBus.connect(ctx.destination);
-  }
-  return worldBus;
-}
-bus.on('audio:volume', ({ cat, value }) => { if (cat === 'world' && worldBus) worldBus.gain.value = value; });
+// preference. It now lives in worldbus.js, shared with the drum circle's
+// instruments, so world volume has ONE owner and ONE path (drum circle design
+// rev 5, §4.6) — extracted verbatim; same gain, same listener, same probe.
 /** For probes: the listener-side gain, and what a sound is actually heard at. */
-export const _worldBus = () => worldBus;
-export const effectiveGain = (id) => { const h = playing.get(id); return h ? h.gain.gain.value * (worldBus?.gain.value ?? volumeFor('world')) : null; };
+export { _worldBus };
+export const effectiveGain = (id) => { const h = playing.get(id); return h ? h.gain.gain.value * (_worldBus()?.gain.value ?? volumeFor('world')) : null; };
 const _pos = new THREE.Vector3();
 const _fwd = new THREE.Vector3();
 const _up = new THREE.Vector3();

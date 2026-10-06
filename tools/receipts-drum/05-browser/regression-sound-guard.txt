@@ -1,0 +1,14 @@
+  [32m✓[0m sounds.js registered its editor
+  [32m✓[0m the stranger: the block says guarded by bobbie, and offers no form
+  [32m✓[0m the stranger: …and still says what is playing
+  [32m✓[0m the stranger: nothing says the owner guards it
+  [32m✓[0m the placer: the form is offered (authorized by subject)
+  [32m✓[0m the placer: nothing says the owner guards it
+  [32m✓[0m the owner: the form is offered (authorized by role)
+  [32m✓[0m the owner: nothing says the owner guards it
+  [32m✓[0m an impostor under the placer's display id is refused by subject
+  [32m✓[0m the placer under a new display id keeps the form
+  [32m✓[0m unguarded: the stranger gets the form too
+
+11 passed, 0 failed
+

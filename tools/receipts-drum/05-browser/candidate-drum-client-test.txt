@@ -1,0 +1,35 @@
+
+1. the drum-v1 noise contract (§6)
+  ✓ 48,000 frames, seed 0x1D0DEC0D
+  ✓ deterministic: two generations are identical
+  ✓ every sample in [−1, 1)
+  ✓ zero-centred noise (|mean| < 0.02)
+
+2. the synced hitter's step choice (§2.4, §3)
+  ✓ a press at T + 10,050 picks gen 2 step 62 ((10,050 + 150) ÷ 166.67 = 61.2 → 62)
+  ✓ during the handover the same press still picks the OUTGOING grid: gen 2 step 62
+  ✓ a press at T + 53,250 lands on gen 3 step 1 (gen 2's next step, 321, is past until)
+  ✓ no running circle → no step
+
+3. 'sharing unknown' deadlines (§2.4)
+  ✓ synced: the step's time + 1 s on the server clock = T + 11,333.33
+  ✓ unsynced: the press + 150 + 166.67 + 1,000 = press + 1,316.67 on the local clock
+
+4. what was struck, in words (§5): struck or queued, never heard
+  ✓ a live hit fills its one cell: bar 3 = '..............T.'
+  ✓ a planned passage fills its bars, marked as mine/queued
+  ✓ the description names tempo, meter and generation
+  ✓ …says 'struck/queued' over the OBSERVED bars, 3–5
+  ✓ …and never says anyone heard anything
+  ✓ an empty window says nothing was struck since you arrived (no implied history)
+  ✓ the count-in is announced before it ends
+  ✓ a scheduled change is announced in time
+  ✓ no invented inheritance: an absent initiator is said plainly (carry note 7)
+
+5. the reference kit (§6)
+  ✓ both drums are valid instrument-set bags
+  ✓ hand = B/T/S, low = B/M
+  ✓ noise stays dark by default (every cutoff ≤ 4 kHz)
+  ✓ …and the kit says plainly it is PROVISIONAL, not yet tuned by ear
+
+23 passed, 0 failed

@@ -1,0 +1,35 @@
+# head 64c69a8, 2026-10-06T16:31:34Z
+
+the drum circle in a real browser — world "drumprobe-lmxmo"
+
+1. the world bus (A5): one owner, one path, volume 0 is silent
+  ✓ sounds.js and instruments.js share ONE bus (the same node)
+  ✓ at world volume 0 the bus carries no signal (analyser peak 0)
+  ✓ at world volume 1 the same strike is heard (peak > 0.01)
+
+2. sender realization and the hitter's states (A10)
+  ✓ the hitter hears the hit once, locally
+  ✓ …and never again from the shared copy (nothing more played on this page)
+  ✓ the hit is SHARED, labelled with the hitter's own measurement
+  ✓ bea (the other page) played the shared copy
+  ✓ a phrase under another author's id is queued (the control)
+  ✓ a phrase carrying the hitter's own id is never queued (the guard behind the server's sender exclusion)
+  ✓ a refused hit (inside bea's count-in) reads 'local only — not shared: count-in…'
+  ✓ a hit whose send AND same-n retry are dropped ends 'sharing unknown' — never shared, never twice
+
+3. bounded polyphony (A6): a planned 32nd-note roll at 180 BPM
+  ✓ bea never exceeds the drum's polyphony (4) during the roll
+  ✓ …because the oldest voices were stolen
+
+4. the clock under a skewed machine (A3, the clock half)
+    adam: serverNow error -1.4 ms (synced true); bea: local clock +417 ms, serverNow error -25.9 ms (synced true)
+  ✓ bea's machine clock really is ~400 ms fast
+  ✓ once synced, a skewed machine's serverNow agrees with the server's clock within 50 ms (unsynced is reported, not hidden)
+
+5. teardown (A8)
+  ✓ removing a drum drops its voices and its panner
+  ✓ a full clear (clearInstruments) leaves no queue, voices or panners
+
+[drum-scratch] receipt {"port":24625,"pid":21140,"nonce":"e2928a0c-a7cd-4be8-bfac-60882ab6b353","startedAt":"2026-10-06T16:31:35.170Z","endedAt":"2026-10-06T16:31:58.745Z","childExited":true,"portClosed":true,"library":"$LIBRARY"}
+
+17 passed, 0 failed

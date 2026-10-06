@@ -1,4 +1,4 @@
-# 05-browser — commit 5, the browser layer (PARTIALLY PROVEN)
+# 05-browser — commit 5, the browser layer (PROVEN in a real browser @ `64c69a8`)
 
 **What the commit adds:** the drum circle in the full client. Design rev 5, §4.6, §6 and §7.
 
@@ -48,6 +48,36 @@ It covers:
 - #201's `sound-clock` (13/0) and `sound-guard` (11/0), which load the real `sounds.js`, so
   the world-bus extraction holds at the module level.
 - circle 61/0, phrase 37/0, hydration 30/0, tag 11/0, and phrase-live 29/0.
+
+## ✅ The real-browser probe runs (commit `64c69a8`, 2026-10-06)
+
+**The blocker was Bun, not the host.** On Windows, Bun's `child_process` does not carry
+Playwright's pipe transport (stdio 3 and 4), so every launch hung at the handshake: Chrome
+or Edge, headless or headful. Node drives the browser now (`node tools/drum-probe.ts`,
+with `BUN_PATH` for the scratch sequencer). The "GPU crash" below was the same hang in
+disguise, and its workaround (`--disable-gpu`) skewed the clock, as measured below.
+
+| receipt | what | result |
+|---|---|---|
+| `candidate-drum-probe.txt` | the probe @ `64c69a8`, real Chrome, GPU on | **17/0** |
+| `base-red-drum-probe.txt` | the same probe on `957ca71` (+ the kit's data) | **red** at the first claim: no `worldbus.js` |
+| `mutants-browser.txt` | 7 browser mutants, served to the pages by request interception (never on disk) | **7/7 killed**, control green |
+| `clock-diag-gpu.txt` | `serverNow()` − the server's clock, one machine | median **−4 ms**, worst −9 ms |
+| `clock-diag-software-gl.txt` | the same, with `--disable-gpu` | median **−159 ms**, worst **−1000 ms** |
+
+Claimed now: **A5** (one bus, silent at 0, heard at 1), **A10** (heard once, locally; shared
+and played by the other page; "local only" with the count-in reason; "sharing unknown"
+after a dropped send and retry; the own-author guard exercised directly, with a control),
+**A6** (≤ 4 voices during the 32nd roll, oldest stolen), **A3's clock half** (a page 400 ms
+fast reads the server within 7 ms once synced), **A8** (a removed drum, and
+`clearInstruments()`, leave nothing behind).
+
+Two honest limits: a world reset tears down by RELOADING the page (`net.js`); no
+`world-reset` bus event is ever emitted, so the probe drives `clearInstruments()` directly.
+And "hears once" is counted at the call site, not measured by onsets. The clock table is
+evidence for the clock's owners: a one-way estimate inherits a starved page's stalls.
+
+*The section below is the 10-06 morning record, kept as it was.*
 
 ## What is NOT yet proven: the real-browser probe is BLOCKED by this host
 

@@ -1,0 +1,30 @@
+# head 64c69a8
+
+control (preload active, no mutant):
+  ✓ probe: 17 passed, 0 failed
+
+mutants:
+  ✓ KILLED bus-bypass — drums reach the speakers only through the world bus (rule 3, A5)
+      probe 16 passed, 1 failed
+      red: ✗ at world volume 1 the same strike is heard (peak > 0.01) — 0
+  ✓ KILLED own-echo — the hitter never plays the shared copy of their own hit (rule 4, A10)
+      probe 16 passed, 1 failed
+      red: ✗ a phrase carrying the hitter's own id is never queued (the guard behind the server's sender exclusion) — {"other":4,"own":4}
+  ✓ KILLED refusal-masked — a refused hit says local only, with the reason (rule 5, A10)
+      probe 16 passed, 1 failed
+      red: ✗ a refused hit (inside bea's count-in) reads 'local only — not shared: count-in…' — {"n":4,"msg":{"live":true,"circle":"drum3","voice":"han
+  ✓ KILLED retry-unbounded — one same-n retry, then sharing unknown (rule 5, A10)
+      probe 16 passed, 1 failed
+      red: ✗ a hit whose send AND same-n retry are dropped ends 'sharing unknown' — never shared, never twice — {"n":5,"msg":{"live":true,"circle":"dru
+  ✓ KILLED steal-off — bounded polyphony, oldest voice stolen (rule 6, A6)
+      probe 15 passed, 2 failed
+      red: ✗ bea never exceeds the drum's polyphony (4) during the roll — {"peak":16,"stolen":0}
+      red: ✗ …because the oldest voices were stolen — {"peak":16,"stolen":0}
+  ✓ KILLED remove-keeps-voice — a removed drum drops its voices and panner (rule 7, A8)
+      probe 16 passed, 1 failed
+      red: ✗ removing a drum drops its voices and its panner — {"q":0,"panners":["hand","fasthand"],"voices":["hand","fasthand"]}
+  ✓ KILLED clear-leaks — clearInstruments leaves nothing behind (rule 7, A8)
+      probe 16 passed, 1 failed
+      red: ✗ a full clear (clearInstruments) leaves no queue, voices or panners — {"q":0,"p":1,"v":1}
+
+7/7 mutants killed; control green

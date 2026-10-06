@@ -1,0 +1,25 @@
+# head 64c69a8
+mode: full, gpu
+  t+0.5s  synced=false  serverNow−server ≈ 0 ms  longest main-thread gap 29 ms
+  t+1.0s  synced=false  serverNow−server ≈ -0 ms  longest main-thread gap 16 ms
+  t+1.5s  synced=false  serverNow−server ≈ 1 ms  longest main-thread gap 18 ms
+  t+2.0s  synced=true  serverNow−server ≈ -9 ms  longest main-thread gap 61 ms
+  t+2.5s  synced=true  serverNow−server ≈ -7 ms  longest main-thread gap 22 ms
+  t+3.0s  synced=true  serverNow−server ≈ -4 ms  longest main-thread gap 9 ms
+  t+3.5s  synced=true  serverNow−server ≈ -4 ms  longest main-thread gap 8 ms
+  t+4.0s  synced=true  serverNow−server ≈ -2 ms  longest main-thread gap 8 ms
+  t+4.5s  synced=true  serverNow−server ≈ -2 ms  longest main-thread gap 8 ms
+  t+5.0s  synced=true  serverNow−server ≈ -2 ms  longest main-thread gap 8 ms
+  t+5.5s  synced=true  serverNow−server ≈ -2 ms  longest main-thread gap 8 ms
+  t+6.0s  synced=true  serverNow−server ≈ -1 ms  longest main-thread gap 7 ms
+  t+6.5s  synced=true  serverNow−server ≈ -1 ms  longest main-thread gap 8 ms
+  t+7.0s  synced=true  serverNow−server ≈ -2 ms  longest main-thread gap 9 ms
+  t+7.5s  synced=true  serverNow−server ≈ -3 ms  longest main-thread gap 40 ms
+  t+8.0s  synced=true  serverNow−server ≈ -4 ms  longest main-thread gap 22 ms
+  t+8.5s  synced=true  serverNow−server ≈ -4 ms  longest main-thread gap 12 ms
+  t+9.0s  synced=true  serverNow−server ≈ -5 ms  longest main-thread gap 22 ms
+  t+9.5s  synced=true  serverNow−server ≈ -7 ms  longest main-thread gap 36 ms
+  t+10.0s  synced=true  serverNow−server ≈ -5 ms  longest main-thread gap 30 ms
+
+synced samples 17: min -9  median -4  max -1 ms
+[drum-clock-diag] receipt {"label":"drum-clock-diag","world":"$DRUM_SCRATCH_ROOT\\2026-10-06T16-33-06-611Z-drum-clock-diag-0dfbe2f5\\worlds","scratchDir":"$DRUM_SCRATCH_ROOT\\2026-10-06T16-33-06-611Z-drum-clock-diag-0dfbe2f5","port":28696,"origin":"http://127.0.0.1:28696","pid":9076,"nonce":"0dfbe2f5-6c9b-4357-bf16-9b0206f0bb9f","mutant":null,"startedAt":"2026-10-06T16:33:06.611Z","endedAt":"2026-10-06T16:33:18.619Z","identity":{"ours":true,"reason":"nonce echoed"},"childExited":true,"exit":{"code":null,"signal":"SIGTERM"},"portClosed":true,"portProbe":true,"scratchWorld":"preserved as a test artifact (never deleted by this harness)","library":"$LIBRARY","envKeys":["AGENT_TOKENS_PATH","APPDATA","COMSPEC","ComSpec","EIDOVERSE_DIR","EIDO_BOOT_NONCE","HOME","HOMEDRIVE","HOMEPATH","JOIN_TOKEN","LOCALAPPDATA","OPT_DIR","PATH","PATHEXT","PORT","Path","SKIP_OPT_SWEEP","SYSTEMDRIVE","SYSTEMROOT","SystemDrive","SystemRoot","TEMP","TMP","USERPROFILE","WINDIR","WORLDS_DIR","WORLD_INSTANCE_NONCE","windir"]}

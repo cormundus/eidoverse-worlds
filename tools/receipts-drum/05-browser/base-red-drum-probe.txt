@@ -1,0 +1,11 @@
+# base 957ca71 (the parent of the browser layer d1eb664) + the probe files and the kit DATA (shared/drumkit.js) from 64c69a8
+
+the drum circle in a real browser — world "drumprobe-20p9p"
+
+1. the world bus (A5): one owner, one path, volume 0 is silent
+  ✗ the probe threw — page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:26032/lib/worldbus.js
+
+[drum-scratch] receipt {"port":26032,"pid":27960,"nonce":"2a8c71a7-0c68-4f69-92c5-6fcd3adc883a","startedAt":"2026-10-06T16:36:56.312Z","endedAt":"2026-10-06T16:37:05.367Z","childExited":true,"portClosed":true,"library":"$LIBRARY"}
+
+0 passed, 1 failed
+exit 1

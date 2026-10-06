@@ -29,9 +29,10 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { connect } from 'node:net';
 
-const ROOT = resolve(import.meta.dir ?? new URL('.', import.meta.url).pathname, '..');
+const ROOT = resolve(import.meta.dir ?? fileURLToPath(new URL('.', import.meta.url)), '..');
 const SCRATCH_ROOT = resolve(process.env.DRUM_SCRATCH_ROOT ?? join(ROOT, '..', 'eidoverse-instruments', 'scratch'));
 
 // Only what a Bun child needs to start on Windows / macOS / Linux.

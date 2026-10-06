@@ -24,7 +24,10 @@
 //      serverNow(); unsynced: the press + L + one step + 1 s on the local
 //      clock). One retry with the same n is allowed; it never sounds twice.
 //   6. Bounded polyphony per drum, oldest voice stolen; ONE panner per drum.
-//   7. Teardown is total: a removed drum, an ended circle, `world-reset`.
+//   7. Teardown is total: a removed drum, an ended circle, clearInstruments().
+//      A world reset tears down by RELOADING the page (net.js 'world-reset');
+//      the bus listener below mirrors emitters.js and pictures.js, though
+//      nothing emits a 'world-reset' bus event today.
 //   8. Only the embodied `world` surface renders. The browser client never
 //      joins as an aux leg (aux legs are other programs), so this holds by
 //      construction here.

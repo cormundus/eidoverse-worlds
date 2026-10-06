@@ -8,7 +8,9 @@
 // `tests`: 'circle' = tools/circle-test.ts (pure); 'tag' = tools/circle-tag-test.ts (pure); 'hydr' =
 // tools/hydration-test.ts (pure); 'hydr-live' = tools/hydration-live-test.ts (owned world, FOLD_EVERY=1); 'live' =
 // tools/circle-live-test.ts and 'comptest' = tools/comptest.ts, each in an
-// owned scratch world whose SERVER runs the mutant.
+// owned scratch world whose SERVER runs the mutant. 'probe' = tools/drum-probe.ts:
+// real Chrome driven by Node (SFU_TEST_CHROME), the mutated BROWSER module served
+// to its pages by request interception.
 export const MUTANTS = [
   { id: 'emit-gate-open', seam: 'script emits may not write circle-set/instrument-set (§2.6)',
     file: 'server/server.ts', find: 'if (verb === "circle-set" || verb === "instrument-set") {', replace: 'if (false) {',
@@ -109,4 +111,27 @@ export const MUTANTS = [
   { id: 'pipe-anywhere', seam: '`|` is allowed only at bar boundaries (§2.3)',
     file: 'shared/circle.js', find: 'if (segs && (segs.length !== bars || segs.some((x) => x.length !== steps))) {', replace: 'if (false) {',
     tests: ['phrase'], expectRed: ['a `|` mid-bar is refused'] },
+  // ---- commit 5, the browser layer: 'probe' = tools/drum-probe.ts in real Chrome, the
+  // mutant served to the pages by request interception (never on disk)
+  { id: 'bus-bypass', seam: 'drums reach the speakers only through the world bus (rule 3, A5)',
+    file: 'client/lib/instruments.js', find: '    p.connect(worldGain());', replace: '    p.connect(ctx.destination);',
+    tests: ['probe'], expectRed: ['at world volume 1 the same strike is heard'] },
+  { id: 'own-echo', seam: "the hitter never plays the shared copy of their own hit (rule 4, A10)",
+    file: 'client/lib/instruments.js', find: "bus.on('phrase', (ph) => { if (ph.author !== net.myId) enqueuePhrase(ph); });", replace: "bus.on('phrase', (ph) => { enqueuePhrase(ph); });",
+    tests: ['probe'], expectRed: ["carrying the hitter's own id is never queued"] },
+  { id: 'refusal-masked', seam: 'a refused hit says local only, with the reason (rule 5, A10)',
+    file: 'client/lib/instruments.js', find: "    h.state = 'local';\n    h.label = `local only — not shared: ${r.why}`;", replace: "    h.state = 'shared';\n    h.label = 'in the circle';",
+    tests: ['probe'], expectRed: ["a refused hit (inside bea's count-in)"] },
+  { id: 'retry-unbounded', seam: 'one same-n retry, then sharing unknown (rule 5, A10)',
+    file: 'client/lib/instruments.js', find: 'if (!h.retried) { h.retried = true;', replace: 'if (true) { h.retried = true;',
+    tests: ['probe'], expectRed: ["ends 'sharing unknown'"] },
+  { id: 'steal-off', seam: 'bounded polyphony, oldest voice stolen (rule 6, A6)',
+    file: 'client/lib/instruments.js', find: 'while (list.length >= (inst.polyphony ?? 8)) {', replace: 'while (false) {',
+    tests: ['probe'], expectRed: ["never exceeds the drum's polyphony", 'oldest voices were stolen'] },
+  { id: 'remove-keeps-voice', seam: 'a removed drum drops its voices and panner (rule 7, A8)',
+    file: 'client/lib/instruments.js', find: "if (kind === 'remove') dropVoice(id);", replace: "if (false) dropVoice(id);",
+    tests: ['probe'], expectRed: ['removing a drum drops'] },
+  { id: 'clear-leaks', seam: 'clearInstruments leaves nothing behind (rule 7, A8)',
+    file: 'client/lib/instruments.js', find: 'for (const id of [...new Set([...voices.keys(), ...panners.keys()])]) dropVoice(id);', replace: '',
+    tests: ['probe'], expectRed: ['a full clear (clearInstruments)'] },
 ];

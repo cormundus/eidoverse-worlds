@@ -25,9 +25,14 @@ const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', 
 const LIVE = { live: ['tools/circle-live-test.ts', []], comptest: ['tools/comptest.ts', []],
   'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']],
   'phrase-live': ['tools/phrase-live-test.ts', []] };
+// the browser probe: Node drives Chrome (Bun's Windows child_process cannot carry
+// Playwright's pipe transport), and the probe starts its own owned world on Bun
+const PROBE = 'tools/drum-probe.ts';
 function runTest(test, mutant) {
-  const env = { ...process.env, DRUM_MUTANT: mutant };
-  const cmd = PURE[test]
+  const env = { ...process.env, DRUM_MUTANT: mutant, BUN_PATH: BUN };
+  const cmd = test === 'probe'
+    ? ['node', ['--no-warnings', PROBE]]
+    : PURE[test]
     ? [BUN, ['--preload', PRELOAD, PURE[test]]]
     // the preload goes to the TEST process as well as the server child: a
     // live test hosts client code in-process (hydration-live-test runs the
@@ -38,16 +43,23 @@ function runTest(test, mutant) {
   const out = (r.stdout ?? '') + (r.stderr ?? '');
   const red = out.split('\n').filter((l) => l.includes('✗')).map((l) => l.trim());
   const summary = (out.match(/\d+ passed, \d+ failed/g) ?? []).pop() ?? `no summary (exit ${r.status})`;
-  const torn = PURE[test] ? true : /"childExited": true/.test(out) && /"portClosed": true/.test(out);
+  const torn = PURE[test] ? true : /"childExited":\s*true/.test(out) && /"portClosed":\s*true/.test(out);
   return { status: r.status, red, summary, torn, stale: /stale mutant/.test(out) };
 }
 
-let ok = true;
+let ok = true, controlOk = true;
 console.log('\ncontrol (preload active, no mutant):');
-for (const t of ['circle', 'tag', 'hydr', 'phrase', 'live', 'comptest', 'hydr-live', 'phrase-live']) {
+const wanted = new Set(MUTANTS.filter((x) => !only.length || only.includes(x.id)).flatMap((x) => x.tests));
+const controls = ['circle', 'tag', 'hydr', 'phrase', 'live', 'comptest', 'hydr-live', 'phrase-live', 'probe']
+  .filter((t) => !only.length || wanted.has(t));
+if (controls.includes('probe') && !process.env.SFU_TEST_CHROME) {
+  console.log('  ✗ probe: SFU_TEST_CHROME is not set — the browser mutants cannot run (refusing a silent skip)');
+  process.exit(1);
+}
+for (const t of controls) {
   const r = runTest(t, 'none');
   const green = r.status === 0 && r.red.length === 0 && r.torn;
-  if (!green) ok = false;
+  if (!green) ok = controlOk = false;
   console.log(`  ${green ? '✓' : '✗'} ${t}: ${r.summary}${r.torn ? '' : ' (TEARDOWN NOT PROVEN)'}`);
 }
 
@@ -72,5 +84,5 @@ for (const m of MUTANTS.filter((x) => !only.length || only.includes(x.id))) {
   for (const l of reds.filter((l) => m.expectRed.some((w) => l.includes(w)))) console.log(`      red: ${l.slice(0, 140)}`);
   if (missing.length) console.log(`      expected red but green: ${missing.join(' | ')}`);
 }
-console.log(`\n${rows.filter((r) => r.killed).length}/${rows.length} mutants killed; control ${ok ? 'green' : 'see above'}`);
+console.log(`\n${rows.filter((r) => r.killed).length}/${rows.length} mutants killed; control ${controlOk ? 'green' : 'NOT green (see above)'}`);
 process.exit(ok ? 0 : 1);

@@ -3,7 +3,11 @@
 // scratch sequencer. Two pages: the hitter, and a second player whose clock
 // is forced 400 ms fast.
 //
-//   SFU_TEST_CHROME=<chrome or edge> bun tools/drum-probe.ts
+//   BUN_PATH=<bun> SFU_TEST_CHROME=<chrome or edge> node tools/drum-probe.ts
+//
+// Node, not Bun, drives the browser: on Windows, Bun's child_process does not
+// carry Playwright's pipe transport (stdio 3/4), so every launch times out at
+// the handshake. The scratch sequencer itself still runs on Bun (BUN_PATH).
 //
 // Uses the repo's pinned playwright (a global one of another version hangs the
 // launch handshake). The library is the asset checkout, READ-ONLY, so drum
@@ -11,6 +15,16 @@
 import { chromium } from "playwright";
 import { scratchWorld } from "./drum-scratch.mjs";
 import { HAND_DRUM, LOW_DRUM } from "../shared/drumkit.js";
+import { MUTANTS } from "./drum-mutants-table.mjs";
+
+// DRUM_MUTANT=<id> (tools/drum-mutants.mjs): a mutant of a BROWSER module is
+// applied by intercepting that one file's response in each page's context —
+// the same exact-once string swap as the Bun preload, never written to disk.
+const MUT_ID = process.env.DRUM_MUTANT;
+const MUT: any = MUT_ID && MUT_ID !== "none" ? MUTANTS.find((m: any) => m.id === MUT_ID) : null;
+if (MUT_ID && MUT_ID !== "none" && !MUT) throw new Error(`[drum-probe] unknown mutant "${MUT_ID}"`);
+if (MUT && !MUT.file.startsWith("client/")) throw new Error(`[drum-probe] ${MUT.id} mutates ${MUT.file}, not a browser module`);
+const MUT_PATH = MUT ? MUT.file.slice("client".length) : null;   // client/lib/x.js is served at /lib/x.js
 
 let passed = 0, failed = 0;
 function check(name: string, ok: boolean, detail = "") {
@@ -22,10 +36,18 @@ const w = await scratchWorld({ label: "drum-probe", library: process.env.EIDOVER
 let browser: any = null;
 try {
   browser = await chromium.launch({ executablePath: process.env.SFU_TEST_CHROME, timeout: 90_000,
-    args: ["--autoplay-policy=no-user-gesture-required", "--disable-gpu"] });
+    args: ["--autoplay-policy=no-user-gesture-required"] });   // NOT --disable-gpu: a software-rendered
+    // page stalls its main thread for 0.4–2 s, and serverNow()'s one-way estimate inherits the stall as
+    // clock error (tools/drum-clock-diag.ts: −150 ms steady, −959 ms at sync; with the GPU, −1 ms)
   const W = `drumprobe-${Math.random().toString(36).slice(2, 7)}`;
   const page = async (name: string, skewMs = 0) => {
     const ctx = await browser.newContext();
+    if (MUT) await ctx.route((u: URL) => u.pathname === MUT_PATH, async (route: any) => {
+      const resp = await route.fetch(); const src = await resp.text();
+      const hits = src.split(MUT.find).length - 1;
+      if (hits !== 1) { console.log(`  ✗ stale mutant ${MUT.id}: ${hits} matches in ${MUT.file}`); return route.abort(); }
+      await route.fulfill({ response: resp, body: src.replace(MUT.find, MUT.replace) });
+    });
     if (skewMs) await ctx.addInitScript((s: number) => {   // a machine whose clock is wrong by s ms
       const pn = performance.now.bind(performance), dn = Date.now;
       performance.now = () => pn() + s; Date.now = () => dn() + s;
@@ -78,6 +100,25 @@ try {
   check("the hit is SHARED, labelled with the hitter's own measurement", after.hit?.state === "shared" && /your own measurement/.test(after.hit?.label), JSON.stringify(after.hit));
   const heard = await D(bea, "({ ...EW.drums.stats })");
   check("bea (the other page) played the shared copy", heard.played >= 1, JSON.stringify(heard));
+  // The server never relays a phrase back to its sender (phrases.ts: broadcast(relay, c)), so the
+  // client's own-author guard sits BEHIND that exclusion and no real relay reaches it. Exercise it
+  // directly: the same future bar, once under another author (must queue — the control that keeps
+  // this check from passing vacuously) and once under the hitter's own id (must not).
+  const echo = await D(adam, `(async () => {
+    const { bus } = await import('/lib/base.js'); const { net } = await import('/lib/net.js');
+    const { barAt } = await import('/shared/circle.js'); const { serverNow } = await import('/lib/remotes.js');
+    const st = (await import('/lib/state.js')).state.st;
+    const c = st.entities.drums.comp.circle, inst = st.entities.hand.comp.instrument;
+    const ph = (author) => ({ circle: 'drums', gen: c.gen, voice: 'hand', voiceGen: inst.voiceGen,
+      bar: barAt(c, serverNow()) + 3, bars: 1, pattern: 'B.B.B.B.', author, legGen: 0, n: 777 });
+    const q = EW.drums.queue, n0 = q.length;
+    bus.emit('phrase', ph('probe-other')); const other = q.length - n0;
+    bus.emit('phrase', ph(net.myId)); const own = q.length - n0 - other;
+    for (let i = q.length - 1; i >= 0; i--) if (q[i].author === 'probe-other' || q[i].author === net.myId) q.splice(i, 1);
+    return { other, own };
+  })()`);
+  check("a phrase under another author's id is queued (the control)", echo.other === 4, JSON.stringify(echo));
+  check("a phrase carrying the hitter's own id is never queued (the guard behind the server's sender exclusion)", echo.own === 0, JSON.stringify(echo));
   await verb(bea, "circle-set", { id: "drum3", op: "start", bpm: 60, meter: 4, subdivision: 1, countIn: 4 });
   await verb(bea, "instrument-set", { id: "hand3", circle: "drum3", ...HAND_DRUM });
   await sleep(600);
@@ -97,7 +138,7 @@ try {
   await verb(adam, "circle-set", { id: "fast", op: "start", bpm: 180, meter: 4, subdivision: 8, countIn: 1 });
   await verb(adam, "instrument-set", { id: "fasthand", circle: "fast", ...HAND_DRUM, polyphony: 4 });
   await sleep(1300);   // grace bar (1,333 ms) — adam is the initiator, so the count-in is his
-  const sent = await D(adam, `(async () => { const s = EW.drums.stats; s.stolen = 0; const c = EW.myState?.() ?? null;
+  const sent = await D(adam, `(async () => { const s = EW.drums.stats; s.stolen = 0;
     const st = (await import('/lib/state.js')).state.st; const circ = st.entities.fast.comp.circle; const inst = st.entities.fasthand.comp.instrument;
     (await import('/lib/net.js')).sendPhrase({ circle: 'fast', gen: circ.gen, voice: 'fasthand', voiceGen: inst.voiceGen, bar: 'next', pattern: 'B'.repeat(32), n: 9000 });
     return true; })()`);
@@ -123,7 +164,9 @@ try {
   check("removing a drum drops its voices and its panner", !td.panners.includes("fasthand") && !td.voices.includes("fasthand"), JSON.stringify(td));
   await D(bea, "EW.drums.clearInstruments()");
   const td2 = await D(bea, "({ q: EW.drums.queue.length, p: EW.drums.panners.size, v: EW.drums.voices.size })");
-  check("a full clear (the world-reset path) leaves no queue, voices or panners", td2.q === 0 && td2.p === 0 && td2.v === 0, JSON.stringify(td2));
+  // clearInstruments() directly: a real world reset reloads the page (net.js 'world-reset'),
+  // and no 'world-reset' BUS event is ever emitted, so there is no reset path to drive here
+  check("a full clear (clearInstruments) leaves no queue, voices or panners", td2.q === 0 && td2.p === 0 && td2.v === 0, JSON.stringify(td2));
 } catch (err) {
   // an exception is a FAILURE, never a silent 0/0 (the first run proved the point)
   failed++;

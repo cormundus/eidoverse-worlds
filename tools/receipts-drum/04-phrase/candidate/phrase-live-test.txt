@@ -1,0 +1,107 @@
+[drum-scratch] owned world up: http://127.0.0.1:21620 pid=7812 nonce=0ead280c-0d75-469c-8cda-22ed78e5aa7d dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-46-41-618Z-c4-final-phraselive-0ead280c
+
+the phrase plane, live — world "drumphrase-55te66"
+
+1. the count-in, and the initiator
+  ✓ bob's bar 0 is refused: count-in — the circle opens at bar 1
+  ✓ alice (the initiator) plays bar 0
+
+2. a planned passage: receipt to the sender, relay to everyone else
+  ✓ accepted, with bar, bars, acceptedAt and scheduledAt
+  ✓ scheduledAt is that bar's step 0 on the grid
+  ✓ carol hears it: author = bob (the client's 'mallory' ignored), legGen from the server (not 999)
+  ✓ the relayed pattern has its `|` removed
+  ✓ the spectator hears it too (a performance is watchable)
+  ✓ bob is NOT sent his own relay (he schedules from his receipt)
+
+3. idempotent resend, and a retry after a drop (the receipt window)
+  ✓ a resend of n 10 returns the ORIGINAL receipt, marked dup
+  ✓ …and relays nothing
+  ✓ n 11 after n 12 (as if 11 had been dropped and retried) is judged as new — never 'old n'
+
+4. planned slots: one per (author, voice, gen, bar)
+  ✓ bob claims bar 12
+  ✓ a second planned phrase for the same bar is refused, never swapped in
+  ✓ a 3-bar passage overlapping only its MIDDLE bar is refused whole
+  ✓ the same bar from a SECOND author on the same drum is permitted (slots are author-scoped)
+
+5. live hits: the server's half of the timing
+  ✓ a synced live hit is accepted, basis client-step
+  ✓ …arrivalToGridMs = scheduledAt − acceptedAt, and no press time is claimed
+  ✓ an unsynced 'next' is placed at least L after arrival, basis arrival
+  ✓ a step already past is refused (local only), never moved
+  ✓ live hits are additive: a second hit on the same step is accepted
+
+6. refusals are receipts, never silence
+  ✓ a spectator gets a receipt: can't play
+  ✓ all 20 burst messages are receipted
+  ✓ past 16 per second, the refusal names the phrase rate
+  ✓ a letter outside the alphabet is refused by name
+
+7. too old to verify
+  ✓ with the window full (64), an n older than all of it is refused: too old to verify
+
+8. end, then restart: the tables clear, the generation continues
+  ✓ after end, a phrase is refused: the circle has ended
+  ✓ the restart continues the generation
+  ✓ n 10 again, in the restarted circle: a FRESH receipt, never the old one marked dup
+
+9. no retention (A9): nothing in the world log records a phrase
+  ✓ the log holds circle-set and instrument-set, and NO phrase
+
+29 passed, 0 failed
+[drum-scratch] receipt {
+  "label": "c4-final-phraselive",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-46-41-618Z-c4-final-phraselive-0ead280c\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-46-41-618Z-c4-final-phraselive-0ead280c",
+  "port": 21620,
+  "origin": "http://127.0.0.1:21620",
+  "pid": 7812,
+  "nonce": "0ead280c-0d75-469c-8cda-22ed78e5aa7d",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:46:41.618Z",
+  "endedAt": "2026-10-06T03:46:53.016Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-46-41-618Z-c4-final-phraselive-0ead280c\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

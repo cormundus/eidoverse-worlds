@@ -20,9 +20,11 @@ const BUN = process.execPath;
 const PRELOAD = join(ROOT, 'tools', 'drum-mutant-preload.mjs');
 const only = process.argv.slice(2);
 
-const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', hydr: 'tools/hydration-test.ts' };
+const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', hydr: 'tools/hydration-test.ts',
+  phrase: 'tools/phrase-test.ts' };
 const LIVE = { live: ['tools/circle-live-test.ts', []], comptest: ['tools/comptest.ts', []],
-  'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']] };
+  'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']],
+  'phrase-live': ['tools/phrase-live-test.ts', []] };
 function runTest(test, mutant) {
   const env = { ...process.env, DRUM_MUTANT: mutant };
   const cmd = PURE[test]
@@ -42,7 +44,7 @@ function runTest(test, mutant) {
 
 let ok = true;
 console.log('\ncontrol (preload active, no mutant):');
-for (const t of ['circle', 'tag', 'hydr', 'live', 'comptest', 'hydr-live']) {
+for (const t of ['circle', 'tag', 'hydr', 'phrase', 'live', 'comptest', 'hydr-live', 'phrase-live']) {
   const r = runTest(t, 'none');
   const green = r.status === 0 && r.red.length === 0 && r.torn;
   if (!green) ok = false;

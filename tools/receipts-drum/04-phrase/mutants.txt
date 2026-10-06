@@ -1,0 +1,58 @@
+
+control (preload active, no mutant):
+  ✓ circle: 61 passed, 0 failed
+  ✓ tag: 11 passed, 0 failed
+  ✓ hydr: 30 passed, 0 failed
+  ✓ phrase: 37 passed, 0 failed
+  ✓ live: 27 passed, 0 failed
+  ✓ comptest: 36 passed, 0 failed
+  ✓ hydr-live: 15 passed, 0 failed
+  ✓ phrase-live: 29 passed, 0 failed
+
+mutants:
+  ✓ KILLED dedupe-off — a resend of a stored n returns the ORIGINAL receipt and relays nothing (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ a resend of n 10 returns the ORIGINAL receipt, marked dup — {"type":"phrase-receipt","n":10,"circle":"drums","gen":1,"voice":"hand","voice
+  ✓ KILLED window-old-off — an n older than the receipt window is refused: too old to verify (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ with the window full (64), an n older than all of it is refused: too old to verify — {"type":"phrase-receipt","n":50,"circle":"drums","gen
+  ✓ KILLED slots-off — one planned phrase per (author, voice, gen, bar); overlap refuses whole (§2.3)
+      phrase-live 27 passed, 2 failed
+      red: ✗ a second planned phrase for the same bar is refused, never swapped in
+      red: ✗ a 3-bar passage overlapping only its MIDDLE bar is refused whole
+  ✓ KILLED relay-to-sender — the relay excludes the sender; the sender schedules from its receipt (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ bob is NOT sent his own relay (he schedules from his receipt)
+  ✗ SURVIVED author-from-client — the server inserts author and legGen; clients never author them (§2.3)
+      phrase-live no summary (exit 1)
+      expected red but green: author = bob
+  ✓ KILLED rate-off — the per-leg phrase budget refuses WITH a receipt (§4.1)
+      phrase-live 28 passed, 1 failed
+      red: ✗ past 16 per second, the refusal names the phrase rate — ["letter \"Q\" is not a stroke this drum declares (BS)","letter \"Q\" is not a str
+  ✓ KILLED spectator-off — spectators and aux legs cannot play, and are told so (§4.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ a spectator gets a receipt: can't play — {"type":"phrase-receipt","n":1,"circle":"drums","gen":1,"voice":"hand","voiceGen":1,"ok":true,"ba
+  ✓ KILLED countin-off — bars 0…countIn−1 are the initiator's alone (§2.1)
+      phrase 34 passed, 3 failed · phrase-live 28 passed, 1 failed
+      red: ✗ a non-initiator's bar 0 is refused: count-in — the circle opens at bar 1
+      red: ✗ a count-in overlap refuses the WHOLE non-initiator passage (bars 1–4, count-in 2)
+      red: ✗ bob's bar 0 is refused: count-in — the circle opens at bar 1 — {"type":"phrase-receipt","n":1,"circle":"drums","gen":1,"voice":"hand","voi
+  ✓ KILLED floor-off — a named bar must begin at least F after acceptance (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ bar 4 at T + 10,640 is refused: "begins in 26.67 ms, too close to relay; next open bar is 5"
+  ✓ KILLED horizon-clamped — a pending grid's NEGATIVE current bar is never clamped (carry note 6)
+      phrase 34 passed, 3 failed
+      red: ✗ at the request (T + 10,000) gen-3 bar 0 is refused as too far (current bar −22, horizon −6)
+      red: ✗ bar 0 enters the horizon at exactly T + 21,333.33 (refused at …32, accepted at …34)
+      red: ✗ an 8-bar gen-3 passage (bars 0–7) is admissible only from T + 35,333.33
+  ✓ KILLED crossing-off — a passage may not cross a scheduled tempo change (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ a 4-bar gen-2 phrase for bars 18–21 is refused: "crosses the tempo change at bar 20"
+  ✓ KILLED live-span-off — a live hit must fall inside its generation's span (§2.1, §2.4)
+      phrase 36 passed, 1 failed
+      red: ✗ gen-2 step 320 (bar 20 step 0, = until) is refused: outside gen 2's span
+  ✓ KILLED pipe-anywhere — `|` is allowed only at bar boundaries (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ a `|` mid-bar is refused
+
+12/13 mutants killed; control see above

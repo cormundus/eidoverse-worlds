@@ -258,6 +258,131 @@ export function normalizeInstrumentBag(b) {
   return out;
 }
 
+// ---- phrases: admission (§2.3, §2.4) -----------------------------------------
+// Pure judges, shared so the sequencer, the tests and the mcpl `play` tool
+// cannot disagree about what a phrase means. The sequencer adds what needs
+// state (dedupe window, planned-slot claims, the per-leg rate) around them.
+
+export const PHRASE_BARS_MAX = 8;
+
+/** The grid a phrase names by its circle generation: the current one, the
+ *  outgoing `prev` (during a handover), or null (stale). Each carries its span
+ *  end `until` (undefined for the current grid). */
+export function gridForGen(c, gen) {
+  if (!circleRunning(c)) return null;
+  if (gen === c.gen) return { t0: c.t0, bpm: c.bpm, meter: c.meter, subdivision: c.subdivision, gen: c.gen, until: undefined, initial: !c.prev };
+  if (c.prev && gen === c.prev.gen) return { ...c.prev, initial: false };
+  return null;
+}
+/** The bar of grid `g` at which its span ends (the scheduled change), or
+ *  undefined when it has none. */
+export const changeBarOf = (g) => (g.until === undefined ? undefined : Math.round((g.until - g.t0) / gridOf(g).barMs));
+
+/** Validate a pattern (and optional velocity) for `bars` bars of `steps`
+ *  steps against an alphabet. `|` is allowed ONLY at bar boundaries and is
+ *  removed. Resolves {ok, pattern, velocity?} or {ok: false, why}. */
+export function normalizePattern(pattern, velocity, { steps, bars, alphabet }) {
+  const strip = (s, what, cell) => {
+    if (typeof s !== 'string') return { why: `${what} must be a string` };
+    const segs = s.includes('|') ? s.split('|') : null;
+    if (segs && (segs.length !== bars || segs.some((x) => x.length !== steps))) {
+      return { why: `${what}: a "|" may only separate whole bars of ${steps} steps (${bars} bar${bars > 1 ? 's' : ''})` };
+    }
+    const flat = segs ? segs.join('') : s;
+    if (flat.length !== steps * bars) return { why: `${what} must be exactly ${steps * bars} steps (${bars} × ${steps}); got ${flat.length}` };
+    for (const ch of flat) if (!cell(ch)) return { why: `${what}: "${ch}" is not allowed here` };
+    return { flat };
+  };
+  const p = strip(pattern, 'pattern', (ch) => ch === '.' || alphabet.includes(ch));
+  if (p.why) {
+    const bad = typeof pattern === 'string' ? [...pattern.replace(/\|/g, '')].find((ch) => ch !== '.' && !alphabet.includes(ch)) : undefined;
+    return { ok: false, why: bad && /not allowed/.test(p.why) ? `letter "${bad}" is not a stroke this drum declares (${alphabet.join('')})` : p.why };
+  }
+  if (velocity === undefined) return { ok: true, pattern: p.flat };
+  const v = strip(velocity, 'velocity', (ch) => ch >= '1' && ch <= '9');
+  if (v.why) return { ok: false, why: v.why };
+  return { ok: true, pattern: p.flat, velocity: v.flat };
+}
+
+/** Is this circle + drum pair playable at all? Shared by both judges. */
+function playable(c, inst, msg) {
+  if (!circleRunning(c)) return { why: 'the circle has ended or does not exist' };
+  if (!inst || inst.ended) return { why: 'that drum has been ended or does not exist' };
+  if (inst.circle !== msg.circle) return { why: `that drum plays in "${inst.circle}", not "${msg.circle}"` };
+  if (!KNOWN_SYNTHS.includes(inst.synth)) return { why: `unknown synth "${inst.synth}"` };
+  if (msg.voiceGen !== inst.voiceGen) return { why: `stale voice generation — the drum is at voiceGen ${inst.voiceGen}` };
+  return null;
+}
+const staleGen = (c, gen) => `stale generation — the circle is at gen ${c.gen}${c.prev ? ` (gen ${c.prev.gen} until its span ends)` : ''}; ${gen} is not playable`;
+
+/** PLANNED phrase (§2.3): whole future bars, the pattern never affects
+ *  admission. `now` = server time at acceptance; `isInitiator` decides the
+ *  count-in. Resolves {ok, bar, bars, pattern, velocity?, scheduledAtServerMs}
+ *  or {ok: false, why}. Pure. */
+export function judgePlanned(c, inst, msg, { now, isInitiator, policy = DRUM_POLICY }) {
+  const p = playable(c, inst, msg); if (p) return { ok: false, why: p.why };
+  const g = gridForGen(c, msg.gen); if (!g) return { ok: false, why: staleGen(c, msg.gen) };
+  const bars = msg.bars ?? 1;
+  if (!(isInt(bars) && bars >= 1 && bars <= PHRASE_BARS_MAX)) return { ok: false, why: `bars must be 1 to ${PHRASE_BARS_MAX}` };
+  const { steps, barMs } = gridOf(g);
+  const pat = normalizePattern(msg.pattern, msg.velocity, { steps, bars, alphabet: Object.keys(inst.strokes) });
+  if (!pat.ok) return { ok: false, why: pat.why };
+  const countInEnd = g.initial && !isInitiator ? c.countIn : 0;   // bars 0…countIn−1 are the initiator's (§2.1)
+  const changeBar = changeBarOf(g);
+  let bar = msg.bar;
+  if (bar === 'next') {
+    const earliest = Math.ceil((now + policy.L_MS - g.t0) / barMs);   // first bar whose step 0 ≥ now + L
+    bar = Math.max(earliest, countInEnd, 0);
+    if (changeBar !== undefined && bar >= changeBar) return { ok: false, why: `gen ${g.gen}'s span ends at bar ${changeBar}; the circle is at gen ${c.gen}` };
+  } else if (!isInt(bar) || bar < 0) {
+    return { ok: false, why: 'bar must be a non-negative integer or "next"' };
+  } else {
+    const begins = barStart(g, bar) - now;
+    if (begins < policy.F_MS) {
+      const nextOpen = Math.max(Math.ceil((now + policy.F_MS - g.t0) / barMs), countInEnd, 0);
+      return { ok: false, why: begins < 0
+        ? `bar ${bar} began ${Math.round(-begins)} ms ago; next open bar is ${nextOpen}`
+        : `bar ${bar} begins in ${+begins.toFixed(2)} ms, too close to relay; next open bar is ${nextOpen}` };
+    }
+  }
+  const last = bar + bars - 1;
+  // bars are contiguous, so a passage touches the count-in iff its first bar does
+  if (bar < countInEnd) return { ok: false, why: `count-in — the circle opens at bar ${countInEnd}` };
+  if (changeBar !== undefined && bar >= changeBar) return { ok: false, why: `bar ${bar} is past gen ${g.gen}'s span (it ends at bar ${changeBar}); the circle is at gen ${c.gen}` };
+  if (changeBar !== undefined && last >= changeBar) return { ok: false, why: `crosses the tempo change at bar ${changeBar}` };
+  const horizon = barAt(g, now) + policy.H_BARS;   // NEGATIVE current bar for a pending grid — never clamped
+  if (last > horizon) return { ok: false, why: `too far ahead: bar ${last} is past the horizon (bar ${horizon} for now)` };
+  return { ok: true, bar, bars, pattern: pat.pattern, ...(pat.velocity ? { velocity: pat.velocity } : {}), scheduledAtServerMs: barStart(g, bar) };
+}
+
+/** LIVE hit (§2.4): one stroke on one step. `step` is the step index counted
+ *  from the named grid's t0 (bar × steps + s), chosen by a synced client, or
+ *  "next", resolved here against ARRIVAL (basis "arrival"). Resolves {ok, bar,
+ *  step (within bar), stepIndex, scheduledAtServerMs, arrivalToGridMs, basis}
+ *  or {ok: false, why}. Pure. */
+export function judgeLive(c, inst, msg, { now, isInitiator, policy = DRUM_POLICY }) {
+  const p = playable(c, inst, msg); if (p) return { ok: false, why: p.why };
+  const g = gridForGen(c, msg.gen); if (!g) return { ok: false, why: staleGen(c, msg.gen) };
+  if (typeof msg.stroke !== 'string' || !(msg.stroke in inst.strokes)) {
+    return { ok: false, why: `stroke "${String(msg.stroke ?? '')}" is not one this drum declares (${Object.keys(inst.strokes).join('')})` };
+  }
+  if (msg.velocity !== undefined && !(isInt(msg.velocity) && msg.velocity >= 1 && msg.velocity <= 9)) return { ok: false, why: 'velocity must be a digit 1–9' };
+  const { steps, stepMs } = gridOf(g);
+  let k, basis;
+  if (msg.step === 'next') { k = Math.max(0, Math.ceil((now + policy.L_MS - g.t0) / stepMs)); basis = 'arrival'; }
+  else if (isInt(msg.step) && msg.step >= 0) { k = msg.step; basis = 'client-step'; }
+  else return { ok: false, why: 'step must be a non-negative integer step index or "next"' };
+  const at = g.t0 + k * stepMs;
+  const bar = Math.floor(k / steps);
+  if (g.until !== undefined && at >= g.until) return { ok: false, why: `outside gen ${g.gen}'s span; gen ${c.gen} starts at its bar 0` };
+  if (basis === 'client-step' && at - now < policy.F_MS) return { ok: false, why: `step ${k} ${at < now ? 'began' : 'begins in'} ${Math.round(Math.abs(at - now))} ms${at < now ? ' ago' : ''}; too late to relay` };
+  const countInEnd = g.initial && !isInitiator ? c.countIn : 0;
+  if (bar < countInEnd) return { ok: false, why: `count-in — the circle opens at bar ${countInEnd}` };
+  const horizon = barAt(g, now) + policy.H_BARS;
+  if (bar > horizon) return { ok: false, why: `too far ahead: bar ${bar} is past the horizon` };
+  return { ok: true, bar, step: k - bar * steps, stepIndex: k, scheduledAtServerMs: at, arrivalToGridMs: at - now, basis };
+}
+
 // ---- instrument-set: shape, door, fold --------------------------------------
 
 /** Shape only: drops voiceGen and ended. Resolves {ok, args} or {ok:false, why}. */

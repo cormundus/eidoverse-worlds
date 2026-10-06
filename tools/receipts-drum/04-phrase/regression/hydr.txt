@@ -1,0 +1,48 @@
+
+0. the server's folded world (hand-computed)
+  ✓ drums: gen 3 at 120 BPM, t0 = T + 20 × 2,666.67 = T + 53,333.33
+  ✓ …with a live prev: gen 2, 90 BPM, t0 = T, until = the new t0
+  ✓ drum2: ended, gen 1
+  ✓ drums' instrument: voiceGen 3, volume 0.5
+
+1–5. both joiners hold the server's bags exactly
+  ✓ stateToEntries emits no comp of a protected type
+  ✓ drums.circle: agent = server
+  ✓ drums.circle: browser = server
+  ✓ drums.instrument: agent = server
+  ✓ drums.instrument: browser = server
+  ✓ drum2.circle: agent = server
+  ✓ drum2.circle: browser = server
+  ✓ spans agree: prev runs 20 bars, the pending grid's bar at the request is −22 on both
+
+6. queued phrase admission agrees (the span half; full admission arrives with the phrase plane)
+  ✓ gen 2 bar 19: agent "in-span" = browser "in-span"
+  ✓ gen 2 bar 20: agent "past-span" = browser "past-span"
+  ✓ gen 3 bar 0: agent "in-span" = browser "in-span"
+  ✓ gen 1 bar 0: agent "stale" = browser "stale"
+  ✓ …and the verdicts are the hand-computed ones (19 in, 20 past, gen 3 bar 0 in, gen 1 stale)
+
+7. end markers survive, and the generation continues
+  ✓ agent: drum2 hydrates ended, and the next start stamps gen 2
+  ✓ browser: drum2 hydrates ended, and the next start stamps gen 2
+
+8–9. authored entries stay refused after hydration
+  ✓ agent: an untrusted comp of type circle stays refused
+  ✓ agent: a hand-edited non-successor circle-set stays refused
+  ✓ browser: an untrusted comp of type circle stays refused
+  ✓ browser: a hand-edited non-successor circle-set stays refused
+
++ the overlap, and failing closed
+  ✓ a tail entry the snapshot already covers folds to nothing (agent)
+  ✓ …and on the browser
+  ✓ a malformed circle bag is DROPPED on the agent (fails closed)
+  ✓ …and on the browser
+  ✓ an instrument bag naming an unknown synth is dropped on both
+  ✓ the diagnostics name the entity and type only — no payload
+  ✓ an intact sibling bag still seeds
+
+NOTE the caption variant (not counted; Weft and Ra's call):
+  captions after late join — browser: PRESENT, agent: MISSING
+  (red on main too — probes/probe-caption-latejoin.mjs; it turns green only if captions join PROTECTED_COMPS)
+
+30 passed, 0 failed

@@ -1,0 +1,17 @@
+
+control (preload active, no mutant):
+  ✓ circle: 61 passed, 0 failed
+  ✓ tag: 11 passed, 0 failed
+  ✓ hydr: 30 passed, 0 failed
+  ✓ phrase: 37 passed, 0 failed
+  ✓ live: 27 passed, 0 failed
+  ✓ comptest: 36 passed, 0 failed
+  ✓ hydr-live: 15 passed, 0 failed
+  ✓ phrase-live: 29 passed, 0 failed
+
+mutants:
+  ✓ KILLED author-from-client — the server inserts author and legGen; clients never author them (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ carol hears it: author = bob (the client's 'mallory' ignored), legGen from the server (not 999) — {"type":"phrase","circle":"drums","gen":
+
+1/1 mutants killed; control green

@@ -1,0 +1,77 @@
+
+caption verb — world "caption-x6xn9b"
+
+— 1. the deed —
+  ✓ a visitor without the deed is refused, and told the grant line
+  ✓ a BUILDER without the deed is refused too — captioning is not a building right
+  ✓ granting a deed for an entity that does not exist is refused at the grant
+  ✓ …and so is a deed for everyone
+  ✓ a builder cannot grant the deed (grant is owner rank)
+  ✓ the owner grants it: the roles map carries {id, born} for the captioner, bound to its sub
+  ✓ the captioner's snapshot says so (yourRights.caption)
+  ✓ the captioner writes: one line, folded into the bag with session, n, title — and the SERVER's generation, not the client's 999
+  ✓ …and the world broadcast exactly one caption entry, stamped
+  ✓ the captioner keeps a visitor's verbs: say lands, spawn is refused by rank
+  ✓ a deed for cinema is no deed for kiosk
+  ✓ the owner captions anything without a deed
+— 2. once-ness —
+  ✓ a duplicate n is refused BEFORE append
+  ✓ n may skip forward; an n at or below the high-water is refused
+  ✓ …the log grew by exactly the accepted line
+  ✓ a new session from the live leg starts a fresh window (n=1, one line, no inherited title)
+  ✓ the bag is server-written: a builder's comp {type: captions} is refused
+  ✓ an end for a session the screen has left is refused
+  ✓ an end for the current session clears the bag
+  ✓ a second end is refused (idempotent at the door, once in the log)
+— 3. generation of the thing —
+  ✓ a lock on the screen does not gate captions (the deed is the authority)
+  ✓ the screen removed: the deed names nothing
+  ✓ the id re-spawned as a different thing: the deed is stale, not transferred
+  ✓ granted again for the new object: it works
+  ✓ caption: null revokes
+— 5. the deed follows the sub —
+  ✓ …the renamed captioner really wears a different display name
+  ✓ its snapshot carries the deed under the new name (rightsIn found the grant by sub)
+  ✓ …and it captions
+  ✓ an impostor under the old name has no deed and the wildcard's rank
+  ✓ …and is refused
+  ✓ a regrant under the new name: one record for the subject, under the new name, with the new deed
+  ✓ …the obsolete deed does not win: cinema refused, kiosk accepted
+  ✓ a third rename with a grant: still exactly one record for the subject, under the latest name, deed and fly both carried
+  ✓ …another subject can wear the absent name (a nameplate, not a deed)
+  ✓ granting a name that carries another subject's record is refused at the door, and says whose
+  ✓ …Bob's record is untouched (owner+gen not inherited, nothing relabeled) and the captioner's own record still stands under its own name
+  ✓ …and the wearer of that name, being another subject, gets its OWN record's rights, not the occupant's
+  ✓ …and renaming back finds the single record under the third name
+  ✓ Bob, back under his own name, still has exactly his own
+— 6. the live leg —
+  ✓ the bag records the live leg's generation
+  ✓ a same-identity rejoin retires the old leg (the server's takeover)
+  ✓ the rejoined leg takes over with an EARLIER-looking session: the door reads its generation, not its clock
+  ✓ a later-joined deed-holder supersedes: its line is taken and the bag follows its generation
+  ✓ the earlier leg's next line is refused as superseded, whatever its session
+  ✓ …and so is its end
+  ✓ its rejoin is a newer leg and wins the screen back
+  ✓ …and the other is now the superseded one
+  ✓ the owner ends it regardless of generation
+  ✓ after the owner's end there is no generation to be behind: any deed-holder starts fresh
+— 7. a sequencer restart —
+  ✓ before: the bag carries this opening's generation
+  ✓ the sequencer stopped
+  ✓ after: the world reloaded with the bag and the rights intact
+  ✓ the renamed captioner's deed survived the restart (rightsIn through the reloaded fold)
+  ✓ the first captioner of the new opening is NOT stranded: its generation is higher than the bag's, the session continues
+  ✓ …and the new generation is not a small process counter (it is bound to the opening's log seq)
+— 4. receipts (WorldClient) —
+  ✓ accept: three lines sent, three receipts, nothing pending
+  ✓ …the title rode the first line only
+  ✓ disconnect before the receipt: the line is resent after reconnect (a newer leg, same session) and lands EXACTLY once
+  ✓ …and the log grew by exactly one
+  ✓ a lost receipt: the ack timeout resends, the door's dedupe answers, read as the receipt — one durable entry
+  ✓ no deed: the line is HELD (not dropped), said once
+  ✓ …and flows after the grant lands, exactly once
+  ✓ end is confirmed by its own echo and the bag is gone
+  ✓ no line was ever refused for good
+
+64 passed, 0 failed
+

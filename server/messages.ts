@@ -24,6 +24,7 @@ import { simSnapshot } from "../shared/sim.js";
 import { worlds, forkWorld, type World, type Client } from "./world.ts";
 import { pendingSnaps } from "./routes.ts";
 import { globalBans, saveGlobalBans } from "./moderation.ts";
+import { handlePhrase } from "./phrases.ts";
 
 // ---- whispers: held-in-memory machinery (moved with its only writers) ------
 // join's held-whisper delivery imports these back — one-way, like
@@ -185,6 +186,13 @@ export const MESSAGES: Record<string, (ctx: MsgCtx, msg: any) => void> = {
     // Legacy packets omit replace and replace the previous animation.
     // Modern merge requests must carry an explicit false.
     c.world.broadcast({ type: "anim", id: c.id, dur: msg.dur, tracks: msg.tracks, loop: !!msg.loop, replace: msg.replace !== false }, c);
+  },
+  "phrase": ({ c, ws }, msg) => {
+    // The drum circle's playing (server/phrases.ts; design rev 5, §2.3–2.4):
+    // judged, deduped, RECEIPTED to the sender, relayed once to everyone else,
+    // and never logged — a moment, like `anim`, but a player must always learn
+    // whether the circle heard them, so even a spectator gets a receipt.
+    handlePhrase(c, ws, msg);
   },
   "puppet": ({ c, ws, now, expel }, msg) => {
     // Ask another body to hold a pose or play an animation. Deliberately

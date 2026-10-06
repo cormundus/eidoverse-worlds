@@ -1,0 +1,53 @@
+
+1. planned phrases: whole future bars (§2.3, §3)
+  ✓ bar 3 at T + 10,000 is refused: "bar 3 began 2000 ms ago; next open bar is 4"
+  ✓ "next" at T + 10,000 resolves to bar 4, scheduled at T + 10,666.67
+  ✓ bar 4 at T + 10,600 is accepted (66.67 ms ≥ F = 50)
+  ✓ bar 4 at T + 10,640 is refused: "begins in 26.67 ms, too close to relay; next open bar is 5"
+  ✓ the pattern never affects admission (leading rests do not open bar 3)
+
+2. live hits: two events, the server's half of the timing (§2.4, §3)
+  ✓ synced step 62 arriving at T + 10,110 is accepted: bar 3 step 14, scheduled T + 10,333.33
+  ✓ …arrivalToGridMs = 10,333.33 − 10,110 = 223.33, basis client-step
+  ✓ …and the receipt carries no press time (only what the server witnessed)
+  ✓ unsynced 'next' arriving at T + 10,200 lands on step 63 (bar 3 step 15) at T + 10,500, 300.00 after arrival, basis arrival
+  ✓ a step that begins less than F after arrival is refused, never moved
+  ✓ a stroke the drum doesn't declare is refused
+
+3. the count-in (§2.1)
+  ✓ a non-initiator's bar 0 is refused: count-in — the circle opens at bar 1
+  ✓ the initiator's bar 0 is accepted
+  ✓ a non-initiator's "next" before the start resolves to bar 1 at the earliest
+  ✓ a count-in overlap refuses the WHOLE non-initiator passage (bars 1–4, count-in 2)
+  ✓ a live hit inside someone else's count-in is refused
+
+4. the handover (§2.1, §3): a change requested at T + 10,000 lands at bar 20
+  ✓ a hit into the outgoing bar (gen 2, step 62) is accepted — on time, inside gen 2's span
+  ✓ gen-2 step 320 (bar 20 step 0, = until) is refused: outside gen 2's span
+  ✓ the press at T + 53,250 → gen 3 step 1 at T + 53,458.33; arriving at 53,310 gives arrivalToGridMs 148.33
+  ✓ a 4-bar gen-2 phrase for bars 18–21 is refused: "crosses the tempo change at bar 20"
+  ✓ gen 2 "next" at T + 53,000 would be bar 20: refused, its span ends there
+  ✓ gen 1 is stale
+
+5. the pending grid's horizon — negative, never clamped (carry note 6)
+  ✓ at the request (T + 10,000) gen-3 bar 0 is refused as too far (current bar −22, horizon −6)
+  ✓ bar 0 enters the horizon at exactly T + 21,333.33 (refused at …32, accepted at …34)
+  ✓ an 8-bar gen-3 passage (bars 0–7) is admissible only from T + 35,333.33
+
+6. multi-bar passages (Mica's rev-5 suite, the stateless cases)
+  ✓ a valid 8-bar passage right at the edge of H (bars 12–19 at T + 10,000: bar 3 + 16 = 19)
+  ✓ an 8-bar passage one bar too far (bars 13–20) is refused
+  ✓ a passage whose first bar fits but last does not (bars 17–20) is refused whole
+  ✓ (crossing a scheduled change, and a count-in overlap, are §4 and §3 above)
+  ✓ bars outside 1–8 are refused
+
+7. patterns: the alphabet, and `|` only at bar boundaries
+  ✓ a `|` between whole bars is accepted and removed
+  ✓ a `|` mid-bar is refused
+  ✓ a letter outside the alphabet is refused, by name
+  ✓ velocity: same shape, digits 1–9
+  ✓ a stale voiceGen is refused
+  ✓ a drum with an unknown synth is refused
+  ✓ an ended circle refuses
+
+37 passed, 0 failed  (policy PROVISIONAL_TEST_VALUE: L 150, F 50, H 16)

@@ -62,7 +62,9 @@ Every message belongs to exactly one plane:
 - **Presence** — relayed or batched, never persisted, gone when it's gone:
   `pose`/`frame`, `typing`, `caption`, `drag`, `anim`, `puppet`,
   `bodydrag`, `lease` streaming, `rtc`, `attest`/`performed`, `whisper`
-  (held in memory for absent recipients, lost on restart — deliberately).
+  (held in memory for absent recipients, lost on restart — deliberately),
+  and `phrase` (the drum circle's playing; *proposed, fork only* — never
+  logged, always receipted).
 
 ## 3. Client → server messages
 
@@ -77,6 +79,7 @@ Every message belongs to exactly one plane:
 | `caption` | presence | embodied, or bound voice leg | `{text≤500, utt?}` | live speech pacing; the finished utterance lands as one `say`. |
 | `drag` | presence | builder+ | `{id, pos, yaw}` | live build feedback; the release is a `place` verb. |
 | `anim` | presence | embodied | `{dur, tracks≤64KB, loop?}` | one-shot custom clip, relayed once. |
+| `phrase` | presence | embodied (a spectator or aux leg gets a refusal receipt) | planned `{circle, gen, voice, voiceGen, bar: int\|"next", bars?: 1–8, pattern, velocity?, n}`; live `{live: true, circle, gen, voice, voiceGen, step: int\|"next", stroke, velocity?, n}` | *Proposed amendment, fork only — the drum circle (shared/circle.js judges, server/phrases.ts).* Judged against the folded `circle` + `instrument`; relayed once to everyone EXCEPT the sender, with `author` and `legGen` inserted by the server; never logged. Every outcome answers `phrase-receipt` (§4) — except a message the global rate gate drops silently, for which same-`n` resend is safe (idempotent within a 64-receipt window per leg and circle). `pattern`: `steps × bars` cells of `.` or a stroke letter, `|` allowed only between bars. |
 | `puppet` | presence | embodied | `{target, pose?, anim?, ragdoll?}` | ROUTED to target, who decides; ragdoll = `true` or `{lean:[x,y,z]}`. |
 | `bodydrag` | presence | embodied | `{target, grab?/end?/pose?/p?/yaw?/sim?/pinAt?/unpin?/pins?}` | ragdoll takeover stream, routed to the body's owner; `sim` = ≤24 joints × {j,p,v}. |
 | `lease` | presence→log | embodied | `{op: claim\|state\|release, id, p?, yaw?, q?, take?}` | server arbitrates (docs/leases.md); release/loss commits one `place` verb. Proximity take ≤3.5m; 5s staleness; ≤8 leases/client. |
@@ -101,7 +104,17 @@ Every message belongs to exactly one plane:
   plane's only carrier.
 - `frame` — `{seq, t, poses{id: pose}}`: the ~15Hz stage tick, latest-wins,
   dropped for clients with >32KB backlog (skip-to-current, never queue).
-- `arrive` / `leave` — embodied presence transitions.
+- `arrive` / `leave` — embodied presence transitions. `leave` carries an
+  additive `gen` (*proposed, fork only*): the departing leg's world-scoped
+  generation, the same value a relayed `phrase` calls `legGen`, so a client
+  drops only that leg's queued phrases. A `leave` without it means every leg.
+- `phrase-receipt` — `{n, ok, circle, gen, voice, voiceGen, acceptedAtServerMs, why?, dup?}`
+  plus, when accepted, planned `{bar, bars, scheduledAtServerMs}` or live
+  `{bar, step, scheduledAtServerMs, arrivalToGridMs, basis: "client-step"|"arrival"}`.
+  Says only what the server witnessed — never a press time. `dup: true` = the
+  original receipt for a resent `n`. *(proposed, fork only)*
+- `phrase` (relayed) — the sender's phrase with `author` and `legGen` added,
+  `|` removed; never sent back to its sender. *(proposed, fork only)*
   `surface-transition` — `{id, surface, gen, retired}`: aux-leg
   join/takeover visibility (rtc re-keying, TTS hold capability).
 - `lease` — `{op: granted\|denied\|claimed\|state\|lost\|released, …}`.
@@ -127,7 +140,9 @@ Rank: 0 visitor (using the world), 1 builder (shaping it), 2 owner.
 - rank 1: `spawn`, `place`, `remove`, `light`, `comp`, `motion`,
   `behavior`, `force`, `mount`*, `dismount`* (*rank 0 when mounting
   YOURSELF — sitting is using, not building), `asset` (also needs the
-  `gen` capability)
+  `gen` capability), and — *proposed amendment, fork only* — `circle-set`
+  and `instrument-set` (the drum circle; doors stamp server-owned fields,
+  in GUARD_AUTHORED, refused on the script emit path)
 - rank 2: `terrain`, `grass`, `sky`, `weather`, `grant`, `kick`, `ban`,
   `unban`
 - server-only actors: `genesis`, `bstate` (scripts' persisted kv),

@@ -20,6 +20,7 @@ import { normalizeCircleSetArgs, stampCircleSet, normalizeInstrumentSetArgs, sta
 import { lintMotion, lintParticles } from "./lint.ts";
 import { reactToUse } from "./reactions.ts";
 import { behaviorLimits } from "./behaviors.ts";
+import { clearCircleTables } from "./phrases.ts";
 import { ROLE_RANK, PROTECTED_COMPS, type LogEntry, type WorldState } from "../shared/fold.js";
 import { SIM_ID } from "../shared/sim.js";
 import { boxOf, worldLibs } from "./boxes.ts";
@@ -498,8 +499,11 @@ function vSpawn(ctx: VerbCtx, args: Record<string, unknown>) {
 const extras: Record<string, Pick<VerbRow, "selfRankZero" | "validate" | "after">> = {
   say: { validate: vSay },
   caption: { validate: vCaption },
-  "circle-set": { validate: vCircleSet },
+  // a circle that ends, or whose entity is removed, drops its phrase tables
+  // (server/phrases.ts; design rev 5 §2.5)
+  "circle-set": { validate: vCircleSet, after: (ctx, entry) => { if ((entry.args as { op?: string }).op === "end") clearCircleTables(ctx.w, String((entry.args as { id?: unknown }).id)); } },
   "instrument-set": { validate: vInstrumentSet },
+  remove: { after: (ctx, entry) => clearCircleTables(ctx.w, String((entry.args as { id?: unknown }).id)) },
   spawn: { validate: vSpawn },
   // A `use` is a cause; reactions turn it into logged effects.
   use: { after: (ctx, entry) => reactToUse(ctx.w, entry) },

@@ -1,0 +1,101 @@
+[drum-scratch] owned world up: http://127.0.0.1:20639 pid=14516 nonce=477b06a4-1747-4715-a560-62b985713630 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-40-22-083Z-c4-circlelive-477b06a4
+
+drum circle verbs, live — world "drumlive-4q51qy"
+
+1. start: the server stamps t0, gen and initiator
+  ✓ a client's gen 99 is dropped: gen 1
+  ✓ a client's initiator is dropped: alice
+  ✓ t0 ≈ acceptance + one bar (500 ms), on the server's clock
+  ✓ countIn defaults to 1
+  ✓ a change before the circle has started is refused
+
+2. who may retime
+  ✓ a visitor is refused (builder rank)
+  ✓ a builder who is not the initiator is refused
+  ✓ lead 15 (< H = 16) is refused
+
+3. a change, with lead time
+  ✓ gen 1 → 2
+  ✓ lead defaults to 16
+  ✓ atBar = current bar + 17 (the door ran at or just before ts)
+  ✓ new t0 = old t0 + atBar × 500
+  ✓ a second change while one is pending is refused, naming its bar
+  ✓ a fresh joiner's snapshot carries the folded circle with prev
+
+4. one writer path
+  ✓ even the owner's comp of type circle is refused
+  ✓ comp of type instrument is refused
+  ✓ a circle-set naming a missing entity is refused
+
+5. instruments, guard and lock
+  ✓ instrument-set: voiceGen 1 (a client's 40 dropped)
+  ✓ an unknown synth is refused
+  ✓ a builder who isn't the placer is refused on a GUARDED drum (GUARD_AUTHORED)
+  ✓ …but MAY tune a LOCKED, unguarded drum (off LOCK_GUARDED)
+
+6. scripts may not emit the server-stamped verbs (§2.6)
+  ✓ script uploads
+  ✓ the emit is refused by name
+  ✓ …and drum2 has no circle
+
+7. end, then start again: the generation continues
+  ✓ end keeps gen 2
+  ✓ a new start continues: gen 3, never 1
+  ✓ …with carol as its initiator, and countIn 2
+
+27 passed, 0 failed
+[drum-scratch] receipt {
+  "label": "c4-circlelive",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-40-22-083Z-c4-circlelive-477b06a4\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-40-22-083Z-c4-circlelive-477b06a4",
+  "port": 20639,
+  "origin": "http://127.0.0.1:20639",
+  "pid": 14516,
+  "nonce": "477b06a4-1747-4715-a560-62b985713630",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:40:22.083Z",
+  "endedAt": "2026-10-06T03:40:31.546Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-40-22-083Z-c4-circlelive-477b06a4\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

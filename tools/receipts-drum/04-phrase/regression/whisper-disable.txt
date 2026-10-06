@@ -1,0 +1,1 @@
+whisper disable gates: 5/5

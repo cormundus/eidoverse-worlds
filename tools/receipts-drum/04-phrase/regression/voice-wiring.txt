@@ -1,0 +1,8 @@
+  [32m✓[0m main.js binds updateVoiceMouths before calling it
+  [32m✓[0m main.js binds micOn before calling it
+  [32m✓[0m main.js binds isMuted before calling it
+  [32m✓[0m main.js binds micAnalyserLevel before calling it
+  [32m✓[0m voicemouths.js binds updateVoiceMouths before calling it
+  [32m✓[0m voicemouths.js binds micOn before calling it
+  [32m✓[0m voicemouths.js binds isMuted before calling it
+  [32m✓[0m voicemouths.js binds micAnalyserLevel before calling it

@@ -1,0 +1,71 @@
+[drum-scratch] owned world up: http://127.0.0.1:29249 pid=13900 nonce=c3424ba6-d7e7-4a67-b331-00d4b065ce3f dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-42-01-326Z-c3-red-phraselive-c3424ba6
+
+the phrase plane, live — world "drumphrase-pahzq0"
+
+1. the count-in, and the initiator
+30 |       send(m) { ws.send(JSON.stringify(m)); },
+31 |       next(pred, ms = 4000) {
+32 |         return new Promise((res, rej) => {
+33 |           const hit = s.msgs.find(pred); if (hit) return res(hit);
+34 |           const t0 = Date.now();
+35 |           const iv = setInterval(() => { const m = s.msgs.find(pred); if (m) { clearInterval(iv); res(m); } else if (Date.now() - t0 > ms) { clearInterval(iv); rej(new Error(`no match in ${ms}ms`)); } }, 15);
+                                                                                                                                                                             ^
+error: no match in 4000ms
+      at <anonymous> ($BASE_WORKTREE\tools\phrase-live-test.ts:35:169)
+
+Bun v1.3.14 (Windows x64)
+[drum-scratch] receipt {
+  "label": "c3-red-phraselive",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-42-01-326Z-c3-red-phraselive-c3424ba6\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-42-01-326Z-c3-red-phraselive-c3424ba6",
+  "port": 29249,
+  "origin": "http://127.0.0.1:29249",
+  "pid": 13900,
+  "nonce": "c3424ba6-d7e7-4a67-b331-00d4b065ce3f",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:42:01.326Z",
+  "endedAt": "2026-10-06T03:42:06.568Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-42-01-326Z-c3-red-phraselive-c3424ba6\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

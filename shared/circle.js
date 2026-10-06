@@ -219,6 +219,45 @@ export function foldCircleSet(folded, a) {
   };
 }
 
+/** A FOLDED circle bag, validated for trusted snapshot hydration (§4.7):
+ *  the bag itself, rebuilt from its known fields, or undefined (fails closed).
+ *  Deterministic and side-effect free (IMPLEMENTATION-CARRY note 2). */
+export function normalizeCircleBag(b) {
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return undefined;
+  const grid = (g) => typeof g.t0 === 'number' && Number.isFinite(g.t0)
+    && inRange(g.bpm, [BPM_MIN, BPM_MAX]) && isInt(g.meter) && g.meter >= METER_MIN && g.meter <= METER_MAX
+    && isInt(g.subdivision) && g.subdivision >= SUBDIVISION_MIN && g.subdivision <= SUBDIVISION_MAX
+    && isInt(g.gen) && g.gen >= 1;
+  if (!grid(b)) return undefined;
+  if (!(isInt(b.countIn) && b.countIn >= COUNT_IN_MIN && b.countIn <= COUNT_IN_MAX)) return undefined;
+  const init = b.initiator;
+  if (!init || typeof init.id !== 'string' || !init.id) return undefined;
+  const out = { t0: b.t0, bpm: b.bpm, meter: b.meter, subdivision: b.subdivision, gen: b.gen, countIn: b.countIn,
+    initiator: { id: init.id, ...(typeof init.sub === 'string' && init.sub ? { sub: init.sub } : {}) } };
+  const look = cleanText(b.look, LOOK_MAX);
+  if (look) out.look = look;
+  if (b.prev !== undefined) {
+    const p = b.prev;
+    if (!p || typeof p !== 'object' || !grid(p) || !(typeof p.until === 'number' && p.until === b.t0) || p.gen !== b.gen - 1) return undefined;
+    out.prev = { t0: p.t0, bpm: p.bpm, meter: p.meter, subdivision: p.subdivision, gen: p.gen, until: p.until };
+  }
+  if (b.ended !== undefined) { if (b.ended !== true) return undefined; out.ended = true; }
+  return out;
+}
+
+/** A FOLDED instrument bag, validated for trusted snapshot hydration; same
+ *  contract as normalizeCircleBag. */
+export function normalizeInstrumentBag(b) {
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return undefined;
+  const n = normalizeInstrumentSetArgs({ ...b, id: 'bag' });
+  if (!n.ok || n.args.end) return undefined;
+  if (!(isInt(b.voiceGen) && b.voiceGen >= 1)) return undefined;
+  const { id: _id, ...bag } = n.args;
+  const out = { ...bag, voiceGen: b.voiceGen };
+  if (b.ended !== undefined) { if (b.ended !== true) return undefined; out.ended = true; }
+  return out;
+}
+
 // ---- instrument-set: shape, door, fold --------------------------------------
 
 /** Shape only: drops voiceGen and ended. Resolves {ok, args} or {ok:false, why}. */

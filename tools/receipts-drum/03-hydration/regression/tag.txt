@@ -1,0 +1,13 @@
+  ✓ the tag is eidoverse:circle
+  ✓ the world feature set's ontology declares it
+  ✓ …as a lifecycle event, never addressing
+  ✓ …whose description promises one line per circle per quiet window, never one per phrase or bar
+  ✓ …and says what was struck lives in look(), never what was heard
+  ✓ one suggested treatment names it
+  ✓ …and it only QUIETS: a 300 s throttle, like the activity digest
+  ✓ no suggested rule anywhere wakes (no `immediate`)
+  ✓ the deprecated alias carries the same list
+  ✓ the advertisement carries the feature set
+  ✓ the manifest's own revision is self-consistent with the new tag
+
+11 passed, 0 failed

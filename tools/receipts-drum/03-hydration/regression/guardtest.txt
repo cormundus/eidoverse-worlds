@@ -1,0 +1,91 @@
+[drum-scratch] owned world up: http://127.0.0.1:28188 pid=24816 nonce=8f9d0ca3-60d2-4d1c-aad0-268fd68f0cb5 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-26-26-367Z-c3-guard-8f9d0ca3
+
+guard matrix — world "guardtest-61btxi"
+
+  ✓ a builder places and dresses his things — no error
+  ✓ guarding your own thing is an ordinary comp — no error
+  ✓ the guard folds (comp.guard in a fresh snapshot)
+  ✓ a stranger's comp on a guarded thing is refused, naming who may
+  ✓ …and the picture is unchanged
+  ✓ motion is refused
+  ✓ place is refused
+  ✓ remove is refused
+  ✓ punt is refused
+  ✓ cargo-mounting the guarded thing is refused
+  ✓ spawn onto the guarded id (wholesale replace) is refused
+  ✓ light onto the guarded id (wholesale replace) is refused
+  ✓ a stranger cannot clear the guard
+  ✓ a stranger cannot guard someone else's UNguarded thing either
+  ✓ …so frame2 stays unguarded
+  ✓ use and self-mount stay open while guarded
+  ✓ an unguarded neighbour still takes a stranger's comp and place (guard is per-entity)
+  ✓ the placer still edits and moves his guarded thing
+  ✓ the world's owner may author it too (moderation power)
+  ✓ placer's picture + owner's comp both landed, guard still on
+  ✓ guarded + locked: the stranger's refusal names the guard, not an unlock they may not do
+  ✓ a stranger may bind a world-level script (no entity authored yet)
+  ✓ …but may not ATTACH one to the guarded thing
+  ✓ the stranger's script ran (it said so)
+  ✓ …and its comp on the guarded thing did not land — scripts write with their author's standing
+  ✓ the placer's script ran on the stranger's use
+  ✓ the placer's script, driven by the stranger's `use`, changes the guarded picture — the bounded interact
+  ✓ guard cleared (data: null) — a stranger's comp lands again
+  ✓ …folded
+
+29 passed, 0 failed
+
+[drum-scratch] receipt {
+  "label": "c3-guard",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-26-367Z-c3-guard-8f9d0ca3\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-26-367Z-c3-guard-8f9d0ca3",
+  "port": 28188,
+  "origin": "http://127.0.0.1:28188",
+  "pid": 24816,
+  "nonce": "8f9d0ca3-60d2-4d1c-aad0-268fd68f0cb5",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:26:26.367Z",
+  "endedAt": "2026-10-06T03:26:58.800Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-26-367Z-c3-guard-8f9d0ca3\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

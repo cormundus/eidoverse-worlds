@@ -20,7 +20,7 @@
 // vocabulary starts minimal (hydrated | reset | entry); per-facet interest
 // filtering arrives with the first realizer, not before.
 
-import { foldEntry, emptyState } from '../../shared/fold.js';
+import { foldEntry, emptyState, seedProtected } from '../../shared/fold.js';
 import { emptySim, simEntry } from '../../shared/sim.js';
 import { rightsIn } from '../../shared/rightsfold.js';
 import { CONFIG, bus } from './base.js';
@@ -74,6 +74,11 @@ export function hydrate(snapshotState, tail = [], throughSeq = -1, sim = null) {
   // Defensive merge: snapshots from older servers may lack newer maps
   // (bans, mounts, behaviors are optional in the shape already).
   state.st = { ...emptyState(), ...structuredClone(snapshotState ?? {}) };
+  // The hydration contract (shared/fold.js seedProtected): the wholesale copy
+  // took the protected bags raw; pass them through the same shared normalizer
+  // the headless agent uses, so both clients hold bags from ONE implementation
+  // (a malformed bag fails closed here exactly as it does there).
+  seedProtected(state.st, snapshotState);
   // the sequencer's sim cut, adopted wholesale — advancement is schedule-
   // independent (PROTOCOL_v2), so resuming from it is exact
   state.sim = sim?.epoch ? structuredClone(sim) : emptySim();

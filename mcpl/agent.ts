@@ -43,7 +43,7 @@ import { isFiniteVec3 } from "./shape.ts";
 import { foldSkyEntry, describeSky, effectiveSky, effectiveClock, dayPhase, hoursAt } from "../shared/forecast.js";
 // The snapshot re-synthesizer, shared with the browser — this agent's
 // deliberate omissions ride as flags (see stateToEntries below).
-import { stateToEntries as sharedStateToEntries, foldEntry, emptyState } from "../shared/fold.js";
+import { stateToEntries as sharedStateToEntries, foldEntry, emptyState, seedProtected } from "../shared/fold.js";
 import { emptySim, simEntry, advanceSim, tickOf } from "../shared/sim.js";
 import { radialForce, FORCE_MIN } from "../shared/force.js";
 // The `particles` component's meaning, shared verbatim with the browser host:
@@ -76,7 +76,7 @@ type Person = { id: string; avatar: string; pose: Pose | null; agent?: boolean; 
 
 /** Verbs whose fold shapes the entity/mount views (epoch/sky shape other
  *  state; say/use/force shape nothing). */
-const ENTITY_VERBS = new Set(["spawn", "light", "place", "remove", "comp", "motion", "mount", "dismount", "caption"]);   // caption folds into the screen's comp bag (shared/captions.js)
+const ENTITY_VERBS = new Set(["spawn", "light", "place", "remove", "comp", "motion", "mount", "dismount", "caption", "circle-set", "instrument-set"]);   // caption folds into the screen's comp bag (shared/captions.js)
 
 /** Presence is a live, lossy plane: a just-joining browser can briefly send a
  * pose shell whose coordinates are null/non-finite before its controller has
@@ -714,6 +714,14 @@ export class WorldAgent {
             const oldestTail = msg.entries.length
               ? Math.min(...msg.entries.map((e: any) => e.seq ?? Infinity)) : Infinity;
             for (const e of stateToEntries(msg.state, oldestTail)) await this.applyEntry(e, false);
+            // The hydration contract (shared/fold.js seedProtected): protected
+            // bags — the drum circle's circle/instrument — never travel as
+            // entries, so seed them from the trusted snapshot now that the
+            // entities exist, and BEFORE the tail, which then folds against
+            // the seeded generations (an already-covered tail entry is a
+            // non-successor and folds to nothing).
+            seedProtected(this.st, msg.state);
+            this.reconcileFromFold();
             for (const e of msg.entries) await this.applyEntry(e, false);
             if (typeof msg.throughSeq === "number") this.lastSeq = Math.max(this.lastSeq, msg.throughSeq);
             for (const e of msg.entries) this.lastSeq = Math.max(this.lastSeq, e.seq ?? -1);

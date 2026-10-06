@@ -1,0 +1,87 @@
+
+vocabulary
+  [32m✓[0m 55 humanoid bones
+  [32m✓[0m 30 finger bones (5 fingers x 3 segments x 2 hands)
+  [32m✓[0m 17 bones every rig must have
+  [32m✓[0m no duplicates
+  [32m✓[0m thumb has a metacarpal, index does not
+
+name resolution
+  [32m✓[0m exact name passes through
+  [32m✓[0m case-insensitive
+  [32m✓[0m separators ignored
+  [32m✓[0m cross-rig synonym: forearm -> lowerArm
+  [32m✓[0m cross-rig synonym: pelvis -> hips
+  [32m✓[0m a non-bone is not invented
+  [32m✓[0m a typo suggests the real bone
+
+pose validation
+  [32m✓[0m accepted the one bone
+  [32m✓[0m normalized to unit
+  [32m✓[0m z' = -0.89838436 (hand-computed)
+  [32m✓[0m a barely-off-unit input is normalized SILENTLY
+  [32m✓[0m unknown bone is rejected, not kept
+  [32m✓[0m rejection carries a suggestion
+  [32m✓[0m a 3-component quaternion is rejected
+  [32m✓[0m a zero quaternion is rejected
+  [32m✓[0m collision keeps the first
+  [32m✓[0m collision reports the second
+  [32m✓[0m collision does not double-count accepted
+  [32m✓[0m a valid bone this rig lacks is 'absent', not accepted
+  [32m✓[0m absence is reported in words
+  [32m✓[0m a clean pose reports nothing
+
+pose channels (the {q, t, s} value form)
+  [32m✓[0m a bare quaternion is still a pose value
+  [32m✓[0m translation alone is enough
+  [32m✓[0m a number scale means uniform
+  [32m✓[0m non-uniform scale passes through
+  [32m✓[0m a malformed channel is dropped, the good ones kept
+  [32m✓[0m nothing usable is null
+  [32m✓[0m a non-finite component is not usable
+
+poses over any bone (rig-checked)
+  [32m✓[0m the rig reader finds every joint
+  [32m✓[0m ...maps raw humanoid bones to VRM names
+  [32m✓[0m ...and knows what sits above the hips
+  [32m✓[0m a wing, a hips move and a scaled head are all accepted
+  [32m✓[0m the wing is reported as beyond the humanoid set
+  [32m✓[0m a value with only q stays a bare array
+  [32m✓[0m t keeps the object form
+  [32m✓[0m an exact rig bone outranks a synonym: Pelvis stays Pelvis, not hips
+  [32m✓[0m a raw humanoid name reads as its VRM name
+  [32m✓[0m a bone above the hips is refused, and told to move hips
+  [32m✓[0m a typo of a rig bone is rejected with the real name
+  [32m✓[0m a bone this rig does not have is rejected
+  [32m✓[0m with no rig to check, a non-humanoid name is kept but said to be unchecked
+  [32m✓[0m ...while a near-miss of a humanoid bone is still a typo
+  [32m✓[0m zero scale is refused
+  [32m✓[0m an unknown channel is named
+  [32m✓[0m a bad q inside the object says which channel
+
+merge and release
+  [32m✓[0m merging an arm keeps the kneel
+  [32m✓[0m ...without touching the pose it merged into
+  [32m✓[0m a null releases just that bone
+  [32m✓[0m a bone given again is replaced whole, not blended
+  [32m✓[0m releasing the last bone leaves nothing held
+  [32m✓[0m merging into nothing is just the delta
+  [32m✓[0m the validator takes null as a release
+  [32m✓[0m ...and still catches a typo in one
+
+track validation
+  [32m✓[0m alias resolved in tracks
+  [32m✓[0m keyframes sorted by t
+  [32m✓[0m span is the last keyframe
+  [32m✓[0m an empty track is dropped with a reason
+  [32m✓[0m a bad keyframe is dropped but the good ones survive
+
+walking and the held pose
+  [32m✓[0m a plain pose is shed by walking (the standing contract)
+  [32m✓[0m a pose pinned with hold survives walking
+  [32m✓[0m stickiness does not transfer to a restored/foreign pose (#61 guard)
+  [32m✓[0m clearing then re-posing does not resurrect stickiness
+  [32m✓[0m a held pose survives a SECOND walk too
+
+[32mall passed[0m
+

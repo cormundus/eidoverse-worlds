@@ -231,7 +231,7 @@ function expel(w: World, target: Client, why: string) {
   clients.delete(target.ws);
   target.world = null;
   target.ws.close?.(4006, "removed by moderation");
-  if (wasEmbodied) { w.broadcast({ type: "leave", id: target.id }); w.bhv.onPresence("leave", target.id); }
+  if (wasEmbodied) { w.broadcast({ type: "leave", id: target.id, gen: target.legGen ?? target.gen }); w.bhv.onPresence("leave", target.id); }
 }
 
 // Operator-log census: people are people, eyes are eyes.
@@ -737,7 +737,12 @@ const server = Bun.serve({
               try { c.world.rememberPose(c.id, c.lastPose); } // sleep where you stood
               catch (err) { console.error(`[world:${c.world.name}] rememberPose for ${c.id} on close`, err); }
             }
-            c.world.broadcast({ type: "leave", id: c.id });
+            // `gen` (additive, drum circle §4.4): the departing leg's world-scoped
+            // generation — the SAME value a relayed phrase calls `legGen` — so a
+            // client drops only that leg's queued phrases (aux retirement's own
+            // precedent: a departure carries the dying generation). Old clients
+            // ignore it; a leave without it still means every leg of that id.
+            c.world.broadcast({ type: "leave", id: c.id, gen: c.legGen ?? c.gen });
             c.world.bhv.onPresence("leave", c.id);
             // The primary is gone: reap every aux leg of this identity, unless a
             // successor took over (its auxes transfer to the new primary — same
@@ -806,7 +811,7 @@ const server = Bun.serve({
             c.world.clients.delete(c);
             retireAuxLeg(c.world, c);
             if (!c.spectator) {
-              c.world.broadcast({ type: "leave", id: c.id });
+              c.world.broadcast({ type: "leave", id: c.id, gen: c.legGen ?? c.gen });
               c.world.bhv.onPresence("leave", c.id);
               reapAuxLegs(c.world, c, "primary traveled");
             }

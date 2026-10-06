@@ -1,0 +1,90 @@
+[drum-scratch] owned world up: http://127.0.0.1:20423 pid=27232 nonce=b7612f3e-ce93-47cd-bee6-3447e218b6fc dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-26-07-943Z-c3-bhv-b7612f3e
+
+runtime scripting matrix — world "bhvtest-7r2x45"
+
+  ✓ script uploads content-addressed
+  ✓ re-upload is idempotent
+  ✓ binary is refused as a script
+  ✓ binding a missing script is refused
+  ✓ script hears use and emits say
+  ✓ script emits carry the author
+  ✓ kv persists across activations
+  ✓ fold: behavior binding is world state
+  ✓ fold: script kv rides bstate entries
+  ✓ per-behavior log ring readable in-world
+  ✓ behavior roster lists it alive
+  ✓ capability mask blocks un-capped verbs
+  ✓ selfOnly keeps a behavior on its own entity
+  ✓ no trespass entry reached the log
+  ✓ infinite loop is interrupted, server lives
+  ✓ script still works after being interrupted (strikes healed by success)
+  ✓ five consecutive errors pause the script, loudly
+  ✓ a paused script no longer reacts
+  ✓ rebind revives with a fresh sandbox (fresh kv)
+  ✓ timers fire with the world's own clock
+  ✓ a visitor cannot bind scripts
+  ✓ unbind stops the clock
+  ✓ fold: unbound behaviors leave the state
+  ✓ a non-owner cannot offer client mods
+  ✓ unknown runtimes are refused
+  ✓ fold: a client-mod offer is world state with its runtime
+  ✓ ...and the server never runs it (rostered as client-mod, no sandbox)
+
+27 passed, 0 failed
+
+[drum-scratch] receipt {
+  "label": "c3-bhv",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-07-943Z-c3-bhv-b7612f3e\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-07-943Z-c3-bhv-b7612f3e",
+  "port": 20423,
+  "origin": "http://127.0.0.1:20423",
+  "pid": 27232,
+  "nonce": "b7612f3e-ce93-47cd-bee6-3447e218b6fc",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:26:07.943Z",
+  "endedAt": "2026-10-06T03:26:26.183Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-26-07-943Z-c3-bhv-b7612f3e\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "BHV_TIMER_MIN",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

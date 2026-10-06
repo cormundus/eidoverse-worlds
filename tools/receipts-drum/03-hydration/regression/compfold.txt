@@ -1,0 +1,87 @@
+[drum-scratch] owned world up: http://127.0.0.1:25695 pid=13072 nonce=81edb78a-c1e5-49d3-9685-167b2bff2ff8 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-25-59-274Z-c3-compfold-81edb78a
+
+folded-component late-join parity (#71) — world "compfold-r2obw8"
+
+  ✓ author built without refusals
+  ✓ fold: swing carries its full component bag
+  ✓ fold: the deleted component is gone from state
+  ✓ fold: cargo rides the swing as parent
+  ✓ the join tail is EMPTY — folded state is the only carrier
+  ✓ replay produced no fabricated build activity
+  ✓ post-fold join: agent reconstructs the component bag
+  ✓ post-fold join: agent and browser serialization agree on the bag
+  ✓ post-fold join: pre-fold deletion stays deleted
+  ✓ look() enumerates the folded socket
+  ✓ look() names the folded lock
+  ✓ look() names the folded emitter semantically
+  ✓ look() lists the inert custom component
+  ✓ look() shows the folded motion
+  ✓ look() knows the folded cargo rides the swing
+  ✓ replay emitted no false live event of any kind
+  ✓ no reaction re-ran on join (no world-authored motion in anyone's live feed)
+  ✓ server refuses the move (lock is enforced)
+  ✓ ...and the agent's own look() already explains why
+  ✓ live replacement lands on the replayed bag as ONE current value
+  ✓ a joiner after the replacement folds sees only the current value
+  ✓ live deletion clears the replayed bag too
+  ✓ post-deletion fold: absent for a fresh browser-path snapshot
+  ✓ post-deletion fold: absent for a fresh agent
+
+24 passed, 0 failed
+
+[drum-scratch] receipt {
+  "label": "c3-compfold",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-25-59-274Z-c3-compfold-81edb78a\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-25-59-274Z-c3-compfold-81edb78a",
+  "port": 25695,
+  "origin": "http://127.0.0.1:25695",
+  "pid": 13072,
+  "nonce": "81edb78a-c1e5-49d3-9685-167b2bff2ff8",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:25:59.274Z",
+  "endedAt": "2026-10-06T03:26:07.760Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-25-59-274Z-c3-compfold-81edb78a\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "FOLD_EVERY",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

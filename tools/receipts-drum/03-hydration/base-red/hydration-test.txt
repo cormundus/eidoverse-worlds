@@ -1,0 +1,3 @@
+SyntaxError: Export named 'seedProtected' not found in module '$BASE_WORKTREE\shared\fold.js'.
+
+Bun v1.3.14 (Windows x64)

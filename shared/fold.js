@@ -15,7 +15,7 @@
 
 import { foldSkyEntry } from './forecast.js';
 import { normalizeCaptionArgs, captionRefusal, foldCaption } from './captions.js';
-import { foldCircleSet, foldInstrumentSet } from './circle.js';
+import { foldCircleSet, foldInstrumentSet, normalizeCircleBag, normalizeInstrumentBag } from './circle.js';
 
 /** Components with ONE writer path — a verb whose door stamps server-owned
  *  fields — so an ordinary `comp` of these types is refused by the door
@@ -578,6 +578,41 @@ export function foldEntry(st, e) {
  *  @param {{ skipChatFromSeq?: number, roles?: boolean, behaviors?: boolean,
  *            collide?: boolean, bodyMountRel?: 'full'|'seat',
  *            bodyMountActor?: 'world'|'rider', now?: number }} [opts] */
+/** THE HYDRATION CONTRACT (drum circle design rev 5, §4.7): trusted folded
+ *  snapshot state, on one side; authored log entries, on the other. A joiner
+ *  — the headless agent after replaying the snapshot's synthetic entries, the
+ *  browser after adopting the snapshot wholesale — calls this ONE function,
+ *  and every protected bag in `st` becomes exactly the snapshot's bag passed
+ *  through its type's shared normalizer, or is dropped when the normalizer
+ *  refuses it (fails closed). It is a function over state, not an entry: no
+ *  log line, verb, behavior emit or message dispatch can reach it, and the
+ *  fold's refusal of a plain `comp` of these types is untouched.
+ *
+ *  Pure apart from writing `st`; deterministic. Returns {seeded, dropped},
+ *  where each dropped item names the entity, the type and a fixed reason —
+ *  never the bag's contents (IMPLEMENTATION-CARRY note 2: diagnostics must
+ *  not leak payloads). Order for the agent: replay the snapshot's synthetic
+ *  entries (so entities exist), then seed, then fold the tail — a tail entry
+ *  the snapshot already covers is then a non-successor and folds to nothing.
+ *  @param {WorldState} st @param {WorldState} snapshotState */
+export function seedProtected(st, snapshotState) {
+  const NORMALIZE = { circle: normalizeCircleBag, instrument: normalizeInstrumentBag };
+  let seeded = 0;
+  const dropped = [];
+  for (const [id, ent] of Object.entries(st?.entities ?? {})) {
+    const snapComp = snapshotState?.entities?.[id]?.comp;
+    for (const type of PROTECTED_COMPS) {
+      const raw = snapComp?.[type];
+      const bag = raw === undefined ? undefined : NORMALIZE[type](raw);
+      if (bag !== undefined) { ent.comp ??= {}; ent.comp[type] = bag; seeded++; continue; }
+      if (ent.comp && type in ent.comp) delete ent.comp[type];
+      if (raw !== undefined) dropped.push({ id, type, why: 'malformed bag (refused by the shared normalizer)' });
+    }
+    if (ent.comp && !Object.keys(ent.comp).length) delete ent.comp;
+  }
+  return { seeded, dropped };
+}
+
 export function stateToEntries(state, {
   skipChatFromSeq = Infinity, roles = true, behaviors = true, collide = true,
   bodyMountRel = 'full', bodyMountActor = 'world', now = Date.now(),
@@ -635,7 +670,13 @@ export function stateToEntries(state, {
   // and every socket, reaction and emitter authored before the fold is
   // missing until someone rewrites it (#71)
   for (const [id, e] of Object.entries(state.entities ?? {})) {
-    for (const [type, data] of Object.entries(e.comp ?? {})) add('comp', { id, type, data });
+    for (const [type, data] of Object.entries(e.comp ?? {})) {
+      // protected bags never travel as entries: the fold would (rightly) refuse
+      // a plain comp of their type, so a joiner seeds them from the snapshot
+      // instead (seedProtected below — the hydration contract, §4.7)
+      if (PROTECTED_COMPS.includes(type)) continue;
+      add('comp', { id, type, data });
+    }
     if (e.parent) add('mount', { id, ...e.parent });
   }
   // body mounts: without these a rejoined body doesn't know it is sitting on

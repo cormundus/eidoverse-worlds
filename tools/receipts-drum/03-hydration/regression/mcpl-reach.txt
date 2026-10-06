@@ -1,0 +1,17 @@
+66 |   return out;
+67 | }
+68 | 
+69 | export function rigs() {
+70 |   const out = [];
+71 |   for (const f of readdirSync(VRM_DIR).filter((n) => n.endsWith('.vrm') && !n.endsWith('.ktx2.vrm')).sort()) {
+                       ^
+ENOENT: no such file or directory, scandir '$REPO\assets\opt\eidoverse\assets\vrms\'
+    path: "$REPO\\assets\\opt\\eidoverse\\assets\\vrms\\",
+ syscall: "scandir",
+   errno: -2,
+    code: "ENOENT"
+
+      at rigs ($REPO\tools\rig-load.mjs:71:19)
+      at $REPO\mcpl\reach-test.ts:24:18
+
+Bun v1.3.14 (Windows x64)

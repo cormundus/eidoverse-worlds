@@ -1,0 +1,63 @@
+
+━━ effective.ts: the composition contract ━━
+  [32m✓[0m static parent + offset: composed, not stale
+  [32m✓[0m socket supplies the local frame
+  [32m✓[0m mount offset/yaw override socket defaults
+  [32m✓[0m parent yaw rotates the offset
+  [32m✓[0m parent scale scales the offset, scales multiply down
+  [32m✓[0m pendulum parent, phase 1: hand-computed
+  [32m✓[0m pendulum parent, phase 2: back through rest
+  [32m✓[0m two nowMs, two positions
+  [32m✓[0m the moving link is named
+  [32m✓[0m nested mounts compose recursively
+  [32m✓[0m a mounted body defaults to the seat offset
+  [32m✓[0m cycle: refused and named
+  [32m✓[0m over-deep chain: refused
+  [32m✓[0m missing parent: refused, link names the parent
+  [32m✓[0m non-finite offset: refused, never substituted
+  [32m✓[0m part socket: honestly unsupported in slice one
+  [32m✓[0m unknown motion type on a link: refused and named
+  [32m✓[0m part motion leaves the root at base
+
+━━ look(): stale coordinates are gone from perception ━━
+  [32m✓[0m mounted cargo reports the carrier's frame
+  [32m✓[0m the stale pre-mount coordinate is GONE
+  [32m✓[0m still says what it rides
+  [32m✓[0m dismount restores the stamped absolute
+  [32m✓[0m bearing follows the ride (S → N)
+  [32m✓[0m distance is measured to the effective position
+  [32m✓[0m distance sort uses the effective position
+  [32m✓[0m part socket: coordinate withheld, frame named
+  [32m✓[0m part socket: the reason is spoken
+  [32m✓[0m unknown motion: no guessed coordinate
+  [32m✓[0m self position rides the seat
+  [32m✓[0m the seat is named
+  [32m✓[0m no invented event during folded replay
+  [32m✓[0m live mount and folded late join agree exactly
+
+━━ B1: sequencer-relative clock ━━
+  [32m✓[0m default look() evaluates on sequencer time
+  [32m✓[0m explicit nowMs is still honored verbatim
+
+━━ B2: no stale fallbacks ━━
+  [32m✓[0m unresolved cargo lists after resolved things, not by its stale 1.4m
+[agent tester] effective transform unavailable for lantern — socket "seat" rides part "plank" of swing2 — part geometry unavailable here
+  [32m✓[0m unresolvable emitter abstains from proximity delivery
+  [32m✓[0m a resolvable emitter still delivers
+  [32m✓[0m own unresolved seat: position unknown, said out loud
+  [32m✓[0m no distance/bearing is measured from a ghost
+  [32m✓[0m resolved coordinates still print (facts survive)
+
+━━ precision: mount chain wins over own motion ━━
+  [32m✓[0m own root motion is inert while mounted (matches the renderer)
+  [32m✓[0m own motion resumes on dismount
+
+━━ body size: a profiled seat lowers a scaled rider in proportion ━━
+  [32m✓[0m a 1× rider's root sits at y = 0.5 − 0.45·1 = 0.05
+  [32m✓[0m a 0.5× rider's root sits at y = 0.5 − 0.45·0.5 = 0.275
+  [32m✓[0m a 2× rider's root sits at y = 0.5 − 0.45·2 = -0.4
+  [32m✓[0m a view without riderScale reads the rider as 1×
+  [32m✓[0m the agent seats a 2× rider (presence scale 2) at y = −0.4
+  [32m✓[0m …and clamps an untrusted presence scale (9 → 2)
+  [32m✓[0m …and an absent presence scale is 1×
+

@@ -5,7 +5,8 @@
 // whose `find` no longer matches exactly once is refused as STALE, so a
 // refactor cannot quietly turn a seam test into a no-op.
 //
-// `tests`: 'circle' = tools/circle-test.ts (pure); 'tag' = tools/circle-tag-test.ts (pure); 'live' =
+// `tests`: 'circle' = tools/circle-test.ts (pure); 'tag' = tools/circle-tag-test.ts (pure); 'hydr' =
+// tools/hydration-test.ts (pure); 'hydr-live' = tools/hydration-live-test.ts (owned world, FOLD_EVERY=1); 'live' =
 // tools/circle-live-test.ts and 'comptest' = tools/comptest.ts, each in an
 // owned scratch world whose SERVER runs the mutant.
 export const MUTANTS = [
@@ -50,4 +51,21 @@ export const MUTANTS = [
     file: 'mcpl/declaration.ts', find: '{ tagsAny: [EIDO.circle], behavior: { throttle: { perMs: 300_000 } } },',
     replace: '{ tagsAny: [EIDO.circle], behavior: "immediate" },',
     tests: ['tag'], expectRed: ['it only QUIETS', 'no suggested rule anywhere wakes'] },
+  // ---- commit 3: the hydration contract ----
+  { id: 'seed-agent-off', seam: 'the agent seeds protected bags from the snapshot before the tail (§4.7)',
+    file: 'mcpl/agent.ts', find: '            seedProtected(this.st, msg.state);', replace: '',
+    tests: ['hydr-live'], expectRed: ['agent drums.circle = server', 'reaches the agent as voiceGen 4'] },
+  { id: 'seed-browser-off', seam: 'the browser passes its wholesale copy through the same normalizer (§4.7)',
+    file: 'client/lib/state.js', find: '  seedProtected(state.st, snapshotState);', replace: '',
+    tests: ['hydr'], expectRed: ['unknown synth is dropped on both'] },
+  { id: 'seed-normalize-off', seam: 'seeding fails closed through the shared normalizer (§4.7, carry note 2)',
+    file: 'shared/fold.js', find: 'const bag = raw === undefined ? undefined : NORMALIZE[type](raw);', replace: 'const bag = raw;',
+    tests: ['hydr'], expectRed: ['a malformed circle bag is DROPPED on the agent'] },
+  { id: 'entries-carry-protected', seam: 'protected bags never travel as entries (stateToEntries omits them)',
+    file: 'shared/fold.js', find: 'if (PROTECTED_COMPS.includes(type)) continue;', replace: '',
+    tests: ['hydr'], expectRed: ['stateToEntries emits no comp of a protected type'] },
+  { id: 'leave-gen-off', seam: "a leave carries the departing leg's generation (§4.4)",
+    file: 'server/server.ts', find: 'every leg of that id.\n            c.world.broadcast({ type: "leave", id: c.id, gen: c.legGen ?? c.gen });',
+    replace: 'every leg of that id.\n            c.world.broadcast({ type: "leave", id: c.id });',
+    tests: ['hydr-live'], expectRed: ['leave carries an integer gen'] },
 ];

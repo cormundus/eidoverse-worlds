@@ -1,0 +1,52 @@
+
+━━ presence: flaps collapse, real events pass, chronic noise drains ━━
+  [32m✓[0m real arrive emits after the hold
+  [32m✓[0m leave→arrive flap collapses to nothing
+  [32m✓[0m flap counted in stats
+  [32m✓[0m arrive→leave brief visit collapses to nothing
+  [32m✓[0m repeated real pairs: first pair narrated, rest silenced by charge
+
+━━ acts: a burst speaks once per window ━━
+  [32m✓[0m 5 rapid jumps → 1 event
+  [32m✓[0m a DIFFERENT act from the same person still speaks
+  [32m✓[0m after the refractory the act speaks again
+
+━━ agent: jump = one thing not two; long sits still narrate ━━
+  [32m✓[0m jump cycle → one event, no 'gets up'
+  [32m✓[0m a real sit still earns its 'gets up'
+
+━━ agent: own say is not an event ━━
+  [32m✓[0m own say suppressed, other's say delivered
+  [32m✓[0m own say still lands in the inbox (honest scrollback)
+
+━━ agent: approach = knock once, not a metronome ━━
+  [32m✓[0m first approach pings
+  [32m✓[0m pacing at the boundary does not re-ping (not re-armed)
+  [32m✓[0m re-armed but inside the refractory: still silent
+  [32m✓[0m gone away + refractory over → the knock counts again
+  [32m✓[0m going away past the re-arm radius pings depart — once, for the visit that counted
+
+━━ agent: activity pulse — regular wakes only while life is near ━━
+  [32m✓[0m one pulse while activity is near
+  [32m✓[0m digest names digi, ignores the far ghost
+  [32m✓[0m quiet nearby → the stream stops by itself
+  [32m✓[0m a nearby build revives the pulse
+
+━━ agent: recurrence is not novelty — ambient scenery dedupes ━━
+  [32m✓[0m travel makes an ambient pulse
+  [32m✓[0m same movers again → suppressed (scenery, not news)
+  [32m✓[0m after the refresh the heartbeat re-confirms — at refresh rate, not window rate
+  [32m✓[0m unchanged cast is a count, not a re-introduction
+  [32m✓[0m speech cuts through the dedupe
+
+━━ agent: idle jitter is not movement ━━
+  [32m✓[0m jitter under the travel floor → no pulse at all
+
+━━ agent: activity dial — the sense is the agent's own to tune ━━
+  [32m✓[0m radius setter returns the applied value
+  [32m✓[0m activity beyond the tuned radius → no pulse
+  [32m✓[0m pulse_sec 0 turns the sense off
+  [32m✓[0m off means off — activity nearby, no pulse
+  [32m✓[0m re-enabling clamps to the 10s floor
+
+[32mall checks passed[0m

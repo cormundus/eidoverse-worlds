@@ -20,23 +20,29 @@ const BUN = process.execPath;
 const PRELOAD = join(ROOT, 'tools', 'drum-mutant-preload.mjs');
 const only = process.argv.slice(2);
 
+const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', hydr: 'tools/hydration-test.ts' };
+const LIVE = { live: ['tools/circle-live-test.ts', []], comptest: ['tools/comptest.ts', []],
+  'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']] };
 function runTest(test, mutant) {
   const env = { ...process.env, DRUM_MUTANT: mutant };
-  const cmd = test === 'circle' || test === 'tag'
-    ? [BUN, ['--preload', PRELOAD, test === 'circle' ? 'tools/circle-test.ts' : 'tools/circle-tag-test.ts']]
-    : [BUN, ['tools/drum-scratch.mjs', '--label', `mut-${mutant}-${test}`, '--',
-        BUN, test === 'live' ? 'tools/circle-live-test.ts' : 'tools/comptest.ts']];
+  const cmd = PURE[test]
+    ? [BUN, ['--preload', PRELOAD, PURE[test]]]
+    // the preload goes to the TEST process as well as the server child: a
+    // live test hosts client code in-process (hydration-live-test runs the
+    // real WorldAgent and the browser's state.js), and a mutant there must load
+    // too (found when seed-agent-off "survived" untouched by the old runner)
+    : [BUN, ['tools/drum-scratch.mjs', '--label', `mut-${mutant}-${test}`, ...LIVE[test][1], '--', BUN, '--preload', PRELOAD, LIVE[test][0]]];
   const r = spawnSync(cmd[0], cmd[1], { cwd: ROOT, env, encoding: 'utf8', timeout: 300_000 });
   const out = (r.stdout ?? '') + (r.stderr ?? '');
   const red = out.split('\n').filter((l) => l.includes('✗')).map((l) => l.trim());
   const summary = (out.match(/\d+ passed, \d+ failed/g) ?? []).pop() ?? `no summary (exit ${r.status})`;
-  const torn = test === 'circle' || test === 'tag' ? true : /"childExited": true/.test(out) && /"portClosed": true/.test(out);
+  const torn = PURE[test] ? true : /"childExited": true/.test(out) && /"portClosed": true/.test(out);
   return { status: r.status, red, summary, torn, stale: /stale mutant/.test(out) };
 }
 
 let ok = true;
 console.log('\ncontrol (preload active, no mutant):');
-for (const t of ['circle', 'tag', 'live', 'comptest']) {
+for (const t of ['circle', 'tag', 'hydr', 'live', 'comptest', 'hydr-live']) {
   const r = runTest(t, 'none');
   const green = r.status === 0 && r.red.length === 0 && r.torn;
   if (!green) ok = false;

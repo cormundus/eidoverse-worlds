@@ -1,0 +1,85 @@
+[drum-scratch] owned world up: http://127.0.0.1:24621 pid=15220 nonce=959fcc86-cc11-46ff-bd7d-184f5dc7f1d0 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-28-49-733Z-c3-hydrlive-959fcc86
+
+hydration with the real agent — world "drumhydr-1k7chq"
+
+  ✓ the builder's script ran without refusals
+
+1. the server's truth (a fresh spectator's snapshot)
+  ✓ drums: gen 3 with a live prev at gen 2 (mid-handover)
+  ✓ drums: voiceGen 3
+  ✓ drum2: ended at gen 1
+  ✓ the join tail carries none of the circle's history (the world has folded) — the bags can only come from the snapshot
+
+2. a FRESH real WorldAgent joins
+  ✓ agent drums.circle = server
+  ✓ agent drums.instrument = server
+  ✓ agent drum2.circle = server
+  ✓ browser hydrate drums.circle = agent
+  ✓ browser hydrate drums.instrument = agent
+  ✓ browser hydrate drum2.circle = agent
+
+3. the tail folds onto the seeded generations
+  ✓ a live edit after the join reaches the agent as voiceGen 4
+  ✓ a forged comp of type circle is refused and the agent's bag is unchanged
+
+4. a leave carries the departing leg's generation (additive `gen`)
+  ✓ leave carries an integer gen
+  ✓ a later leg of the same identity leaves with a higher gen
+
+15 passed, 0 failed
+[drum-scratch] receipt {
+  "label": "c3-hydrlive",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-28-49-733Z-c3-hydrlive-959fcc86\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-28-49-733Z-c3-hydrlive-959fcc86",
+  "port": 24621,
+  "origin": "http://127.0.0.1:24621",
+  "pid": 15220,
+  "nonce": "959fcc86-cc11-46ff-bd7d-184f5dc7f1d0",
+  "mutant": null,
+  "startedAt": "2026-10-06T03:28:49.733Z",
+  "endedAt": "2026-10-06T03:28:54.655Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-28-49-733Z-c3-hydrlive-959fcc86\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "FOLD_EVERY",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

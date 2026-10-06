@@ -1,0 +1,112 @@
+# head 856b8b3
+[drum-scratch] owned world up: http://127.0.0.1:25739 pid=11344 nonce=3886dae4-142d-437b-911a-89c2f670f3dd dir=$DRUM_SCRATCH_ROOT\2026-10-06T16-44-20-993Z-drum-mcpl-3886dae4
+
+the drum circle for residents — world "drummcpl-6ehmsh"
+
+1. look() before anyone plays
+  ✓ the circle is described: tempo, meter, gen, initiator
+  ✓ …with the count-in announced
+  ✓ …and nothing claimed as struck before anyone played
+  ✓ a drum names its stroke letters
+  ✓ the play hint gives the sounding grid's bar length
+  ✓ no circle/instrument bag leaks as a raw 'components:' line
+
+2. the play tool: the receipt is the only feedback
+  ✓ a non-initiator's bar 0 inside the count-in is refused, with the world's reason
+  ✓ a drum that isn't there is refused locally, and says what to do
+  ✓ a two-bar passage written with "|" is accepted whole (bars counted from the "|"s)
+  ✓ …on two consecutive bars
+
+3. perception: what was struck, never what was heard
+  ✓ the listener's look shows the resident's pattern strings over the observed bars
+  ✓ …and never claims anything was heard
+  ✓ the resident sees its own passage as queued (*)
+
+4. the eidoverse:circle line: one per circle per quiet window
+  ✓ the listener got exactly ONE line for four passages: 'began', naming who plays
+  ✓ the player gets no line for its own playing (the self-echo rule)
+
+5. receipts are truthful
+  ✓ a second passage for a bar already claimed is refused by name, never swapped in
+  ✓ after the drum is retuned (voiceGen bump), the tool reads the new voiceGen for you
+  ✓ a passage whose message is lost resolves 'sharing unknown', never a guess
+
+6. quiet, and far away
+  ✓ once the last passage has played and the window passes, ONE 'went quiet' line
+  ✓ …and not before the last queued step had its time (+ the quiet window)
+  ✓ a circle beyond the listener's radius makes no line (212 m away; radius 30)
+
+7. playing again, then the end
+  ✓ a new quiet window opens with one more 'began'
+  ✓ ending the circle while it is being played says so once, at once
+  ✓ …and nothing more follows (no late 'quiet' after the end)
+  ✓ playing an ended circle is refused locally
+
+8. the initiator leaves (no invented inheritance)
+  ✓ while bob is present, his circle names him and says nothing about a missing initiator
+  ✓ once bob has left, look says exactly who may still change or end it
+  ✓ a phrase under the listener's own name opens no line (the guard behind the server's sender exclusion)
+  ✓ …while the same phrase under another name does (the control)
+
+9. no retention, at both ends (A9)
+  ✓ every circle-related event the listener's body produced is an eidoverse:circle lifecycle line
+  ✓ …and none of them carries a pattern
+  ✓ …and nothing of the jam reached the inbox (the chat look() replays)
+  ✓ the world log holds no phrase and no pattern string
+
+33 passed, 0 failed
+[drum-scratch] receipt {
+  "label": "drum-mcpl",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-44-20-993Z-drum-mcpl-3886dae4\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-44-20-993Z-drum-mcpl-3886dae4",
+  "port": 25739,
+  "origin": "http://127.0.0.1:25739",
+  "pid": 11344,
+  "nonce": "3886dae4-142d-437b-911a-89c2f670f3dd",
+  "mutant": null,
+  "startedAt": "2026-10-06T16:44:20.993Z",
+  "endedAt": "2026-10-06T16:44:32.507Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-44-20-993Z-drum-mcpl-3886dae4\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

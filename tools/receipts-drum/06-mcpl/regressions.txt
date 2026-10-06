@@ -1,0 +1,15 @@
+# head 856b8b3
+circle-test        61 passed, 0 failed
+circle-tag-test    11 passed, 0 failed
+hydration-test     30 passed, 0 failed
+phrase-test        37 passed, 0 failed  (policy PROVISIONAL_TEST_VALUE: L 150, F 50, H 16)
+drum-client-test   23 passed, 0 failed
+circle-live        27 passed, 0 failed
+comptest           36 passed, 0 failed
+hydr-live          15 passed, 0 failed
+phrase-live        29 passed, 0 failed
+mcpl/manifest-test exit 0 · # fail 0
+mcpl/effective-test exit 0 · 
+mcpl/denoise-test  exit 0 · all checks passed
+mcpl/selfpose-test exit 0 · all passed
+mcpl/reach-test    exit 1 · ENVIRONMENTAL: ENOENT: no such file or directory (VRM rig fixtures absent from this worktree; fails before any drum code)

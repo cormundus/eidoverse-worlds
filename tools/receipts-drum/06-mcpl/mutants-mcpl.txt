@@ -1,0 +1,37 @@
+# head 856b8b3
+
+control (preload active, no mutant):
+  ✓ mcpl: 33 passed, 0 failed
+
+mutants:
+  ✓ KILLED line-per-phrase — one eidoverse:circle line per circle per quiet window, never per phrase (§5, A9)
+      mcpl 28 passed, 5 failed
+      red: ✗ the listener got exactly ONE line for four passages: 'began', naming who plays — [{"ts":1791305087343,"kind":"circle","who":"resident","te
+  ✓ KILLED agent-self-echo — a body gets no line for its own playing (the self-echo rule)
+      mcpl 31 passed, 2 failed
+      red: ✗ a phrase under the listener's own name opens no line (the guard behind the server's sender exclusion) — 1
+  ✓ KILLED radius-off — the lifecycle line is radius-gated like every ambient sense
+      mcpl 32 passed, 1 failed
+      red: ✗ a circle beyond the listener's radius makes no line (212 m away; radius 30) — {"farR":true,"lines":[{"ts":1791305113017,"kind":"circle","w
+  ✓ KILLED quiet-early — 'quiet' waits for the last queued step, then the window
+      mcpl 32 passed, 1 failed
+      red: ✗ …and not before the last queued step had its time (+ the quiet window) — -2379 ms after the last bar ended
+  ✓ KILLED end-silent — ending a played circle says so once, at once
+      mcpl 31 passed, 2 failed
+      red: ✗ ending the circle while it is being played says so once, at once — ["a drum circle near you began playing [drums] (240 BPM, 2/4): resident
+  ✓ KILLED look-no-circle — look() carries describeCircle: struck/queued pattern strings (§5)
+      mcpl 25 passed, 8 failed
+      red: ✗ the circle is described: tempo, meter, gen, initiator — You are "listener" in world "drummcpl-17qtpi" at (0.0, 0.0), ground height 0.00m, 
+      red: ✗ the listener's look shows the resident's pattern strings over the observed bars —   - [hand] drum: 1.0m E at (1.0, 0.0, 0.0) — drum "hand"
+  ✓ KILLED initiator-invented — no invented inheritance: an absent initiator is said plainly (carry 7)
+      mcpl 32 passed, 1 failed
+      red: ✗ once bob has left, look says exactly who may still change or end it — , 240 BPM, 2/4 in eighths (gen 1), started by bob /   count-in by bo
+  ✓ KILLED tool-stale-voicegen — the tool reads the drum's CURRENT voiceGen; the resident never handles it (§5)
+      mcpl 28 passed, 5 failed
+      red: ✗ after the drum is retuned (voiceGen bump), the tool reads the new voiceGen for you — voiceGen 1→2: refused by the world: stale voice gener
+  ✓ KILLED tool-refusal-as-accept — the tool reports a refusal as a refusal, with the world's reason
+      mcpl 29 passed, 4 failed
+      red: ✗ a non-initiator's bar 0 inside the count-in is refused, with the world's reason — accepted: "hand" bar undefined of circle drums (gen 1), 
+      red: ✗ a second passage for a bar already claimed is refused by name, never swapped in — accepted: "hand" bar undefined of circle drums (gen 1), 
+
+9/9 mutants killed; control green

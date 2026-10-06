@@ -1,0 +1,81 @@
+# base 2572f9a (the parent of the text tier) + tools/drum-mcpl-test.ts from 856b8b3
+[drum-scratch] owned world up: http://127.0.0.1:26767 pid=27180 nonce=9bc8c0ad-b783-48a8-bd70-35af31333430 dir=$DRUM_SCRATCH_ROOT\2026-10-06T16-43-41-856Z-base-mcpl-9bc8c0ad
+
+the drum circle for residents — world "drummcpl-heby8i"
+
+1. look() before anyone plays
+  ✗ the circle is described: tempo, meter, gen, initiator — You are "listener" in world "drummcpl-heby8i" at (0.0, 0.0), ground height 0.00m, facing S. /   - [drums] drum: 0.0m S at (0.0, 0.0, 0.0) — components: circle /   - [hand] drum: 1.0m E at (1.0, 0.0, 0.0) — components: instrument /   - [low] drum: 1.0m W at (-1.0, 0.0, 0.0) — components: instrument /   - [drum3] drum: 2.8m SE at (2.0, 0.0, 2.0) /   - [faraway] drum: 212.1m SE at (150.0, 0.0, 150.0) /   - [farhand] drum: 212.8m SE at (151.0, 0.0, 150.0)
+  ✗ …with the count-in announced
+  ✗ …and nothing claimed as struck before anyone played
+  ✗ a drum names its stroke letters
+  ✗ the play hint gives the sounding grid's bar length
+  ✗ no circle/instrument bag leaks as a raw 'components:' line
+
+2. the play tool: the receipt is the only feedback
+54 |     ws.onerror = (e) => reject(e);
+55 |     s.next((m) => m.type === "snapshot").then(() => resolve(s), reject);
+56 |   });
+57 | }
+58 | const tool = async (ag: WorldAgent, a: Record<string, any>) =>
+59 |   ((await HANDLERS.play(ag as any, a, {} as any, "play")) as any).content[0].text as string;
+                        ^
+TypeError: HANDLERS.play is not a function. (In 'HANDLERS.play(ag, a, {}, "play")', 'HANDLERS.play' is undefined)
+      at <anonymous> ($BASE_WORKTREE\tools\drum-mcpl-test.ts:59:20)
+      at $BASE_WORKTREE\tools\drum-mcpl-test.ts:99:23
+
+Bun v1.3.14 (Windows x64)
+[drum-scratch] receipt {
+  "label": "base-mcpl",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-43-41-856Z-base-mcpl-9bc8c0ad\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-43-41-856Z-base-mcpl-9bc8c0ad",
+  "port": 26767,
+  "origin": "http://127.0.0.1:26767",
+  "pid": 27180,
+  "nonce": "9bc8c0ad-b783-48a8-bd70-35af31333430",
+  "mutant": null,
+  "startedAt": "2026-10-06T16:43:41.856Z",
+  "endedAt": "2026-10-06T16:43:44.463Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T16-43-41-856Z-base-mcpl-9bc8c0ad\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

@@ -5,7 +5,7 @@
 // whose `find` no longer matches exactly once is refused as STALE, so a
 // refactor cannot quietly turn a seam test into a no-op.
 //
-// `tests`: 'circle' = tools/circle-test.ts (pure); 'live' =
+// `tests`: 'circle' = tools/circle-test.ts (pure); 'tag' = tools/circle-tag-test.ts (pure); 'live' =
 // tools/circle-live-test.ts and 'comptest' = tools/comptest.ts, each in an
 // owned scratch world whose SERVER runs the mutant.
 export const MUTANTS = [
@@ -42,4 +42,12 @@ export const MUTANTS = [
   { id: 'synth-open', seam: 'an unknown synth fails closed (§2.2)',
     file: 'shared/circle.js', find: 'if (!KNOWN_SYNTHS.includes(a.synth)) return', replace: 'if (false) return',
     tests: ['circle', 'live'], expectRed: ['unknown synth'] },
+  // ---- commit 2: the eidoverse:circle ontology entry ----
+  { id: 'tag-undeclared', seam: 'the world feature set declares eidoverse:circle (§5)',
+    file: 'mcpl/declaration.ts', find: '    [EIDO.circle]: {', replace: '    ["eidoverse:not-circle"]: {',
+    tests: ['tag'], expectRed: ["the world feature set's ontology declares it"] },
+  { id: 'tag-treatment-wakes', seam: 'its suggested treatment only quiets (a throttle, never immediate)',
+    file: 'mcpl/declaration.ts', find: '{ tagsAny: [EIDO.circle], behavior: { throttle: { perMs: 300_000 } } },',
+    replace: '{ tagsAny: [EIDO.circle], behavior: "immediate" },',
+    tests: ['tag'], expectRed: ['it only QUIETS', 'no suggested rule anywhere wakes'] },
 ];

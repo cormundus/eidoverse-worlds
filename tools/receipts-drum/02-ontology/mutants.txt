@@ -1,0 +1,17 @@
+
+control (preload active, no mutant):
+  ✓ circle: 61 passed, 0 failed
+  ✓ tag: 11 passed, 0 failed
+  ✓ live: 27 passed, 0 failed
+  ✓ comptest: 36 passed, 0 failed
+
+mutants:
+  ✓ KILLED tag-undeclared — the world feature set declares eidoverse:circle (§5)
+      tag 7 passed, 4 failed
+      red: ✗ the world feature set's ontology declares it — ["eidoverse:whisper","eidoverse:approach","eidoverse:depart","eidoverse:reach","eidoverse:t
+  ✓ KILLED tag-treatment-wakes — its suggested treatment only quiets (a throttle, never immediate)
+      tag 9 passed, 2 failed
+      red: ✗ …and it only QUIETS: a 300 s throttle, like the activity digest — {"tagsAny":["eidoverse:circle"],"behavior":"immediate"}
+      red: ✗ no suggested rule anywhere wakes (no `immediate`)
+
+2/2 mutants killed; control green

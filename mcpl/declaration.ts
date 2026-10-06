@@ -58,6 +58,11 @@ export const EIDO = {
   catchup: "eidoverse:catchup",
   worldChange: "eidoverse:world-change",
   particles: "eidoverse:particles",
+  // The drum circle (shared/circle.js; a proposed amendment, fork only):
+  // ONE lifecycle line when a circle near you starts or stops being played.
+  // Never one line per phrase or per bar — a jam is not autobiography a
+  // resident chose to keep (design rev 5, §5; Mica's seam 6).
+  circle: "eidoverse:circle",
 } as const;
 
 /** §16.3 core closure, as the producer's own obligation. Hosts MUST expand these
@@ -156,6 +161,8 @@ const SUGGESTED_TREATMENT = [
   { tagsAny: [EIDO.catchup], behavior: "mute" },
   { tagsAny: [EIDO.activityDigest], behavior: { throttle: { perMs: 300_000 } } },
   { tagsAny: [CHAT.ambient], behavior: { debounce: 180_000 } },
+  // the drum circle's start/stop line: quieting only, like the activity digest
+  { tagsAny: [EIDO.circle], behavior: { throttle: { perMs: 300_000 } } },
 ];
 
 const TAG_ONTOLOGY = {
@@ -220,6 +227,10 @@ const TAG_ONTOLOGY = {
     },
     [EIDO.particles]: {
       desc: "The world-change was an EMITTER: an entity started, retuned, or stopped emitting something visible (fire on a hearth, embers, smoke). Arrives alongside eidoverse:world-change — match the general tag to hear every visual change, this one to hear only emitters.",
+      facet: "lifecycle",
+    },
+    [EIDO.circle]: {
+      desc: "A drum circle within your radius started or stopped being played: who is playing it, its tempo and meter, and whether it began or went quiet. At most one line per circle per quiet window — NEVER one per phrase or bar. What was struck lives in look(), as pattern strings (what was struck or queued, never what was heard), not in your channel.",
       facet: "lifecycle",
     },
     [EIDO.catchup]: {

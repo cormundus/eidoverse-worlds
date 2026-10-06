@@ -22,21 +22,21 @@ const only = process.argv.slice(2);
 
 function runTest(test, mutant) {
   const env = { ...process.env, DRUM_MUTANT: mutant };
-  const cmd = test === 'circle'
-    ? [BUN, ['--preload', PRELOAD, 'tools/circle-test.ts']]
+  const cmd = test === 'circle' || test === 'tag'
+    ? [BUN, ['--preload', PRELOAD, test === 'circle' ? 'tools/circle-test.ts' : 'tools/circle-tag-test.ts']]
     : [BUN, ['tools/drum-scratch.mjs', '--label', `mut-${mutant}-${test}`, '--',
         BUN, test === 'live' ? 'tools/circle-live-test.ts' : 'tools/comptest.ts']];
   const r = spawnSync(cmd[0], cmd[1], { cwd: ROOT, env, encoding: 'utf8', timeout: 300_000 });
   const out = (r.stdout ?? '') + (r.stderr ?? '');
   const red = out.split('\n').filter((l) => l.includes('✗')).map((l) => l.trim());
   const summary = (out.match(/\d+ passed, \d+ failed/g) ?? []).pop() ?? `no summary (exit ${r.status})`;
-  const torn = test === 'circle' ? true : /"childExited": true/.test(out) && /"portClosed": true/.test(out);
+  const torn = test === 'circle' || test === 'tag' ? true : /"childExited": true/.test(out) && /"portClosed": true/.test(out);
   return { status: r.status, red, summary, torn, stale: /stale mutant/.test(out) };
 }
 
 let ok = true;
 console.log('\ncontrol (preload active, no mutant):');
-for (const t of ['circle', 'live', 'comptest']) {
+for (const t of ['circle', 'tag', 'live', 'comptest']) {
   const r = runTest(t, 'none');
   const green = r.status === 0 && r.red.length === 0 && r.torn;
   if (!green) ok = false;

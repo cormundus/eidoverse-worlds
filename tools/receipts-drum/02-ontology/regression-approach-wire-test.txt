@@ -1,0 +1,29 @@
+  ok  approach is chat:addressed
+  ok  approach carries its event tag
+  ok  approach is mentioned:true (the shim two hosts still route on)
+  ok  approach is NOT ambient — addressed wins
+  ok  approach wording
+  ok  depart is chat:ambient
+  ok  depart carries its event tag
+  ok  depart is NOT addressed — being left is not being addressed
+  ok  depart never sets mentioned
+  ok  depart renders the agent's own who-moved text
+  ok  ...including the actor-neutral sentence, verbatim
+  ok  reach is addressed + mentioned, worded by the agent
+  ok  touch is addressed + mentioned, worded by the agent
+  ok  a ping from an agent-driven body says so
+  ok  ...and a browser body does not (no evidence, no claim)
+  ok  mention pings ride the say event, never this path
+  ok  whisper pings ride their own delivery, never this path
+  ok  pending: mention
+  ok  pending: whisper
+  ok  pending: approach
+  ok  pending: depart, agent-worded
+  ok  pending: depart, actor-neutral
+  ok  pending: touch keeps its own phrasing
+  ok  (setup) approach delivered
+  ok  disconnect yields one presence exit
+  ok  ...and no synthetic depart — one exit, one line
+  ok  the re-arm state went with them (a return visit starts clean)
+
+27 passed, 0 failed

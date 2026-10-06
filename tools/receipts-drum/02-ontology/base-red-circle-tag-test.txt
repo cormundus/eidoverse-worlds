@@ -1,0 +1,13 @@
+  ✗ the tag is eidoverse:circle — undefined
+  ✗ the world feature set's ontology declares it — ["eidoverse:whisper","eidoverse:approach","eidoverse:depart","eidoverse:reach","eidoverse:touch","eidoverse:act","eidoverse:presence","eidoverse:activity-digest","eidoverse:weather","eidoverse:world-change","eidoverse:particles","eidoverse:catchup"]
+  ✗ …as a lifecycle event, never addressing
+  ✗ …whose description promises one line per circle per quiet window, never one per phrase or bar
+  ✗ …and says what was struck lives in look(), never what was heard
+  ✗ one suggested treatment names it — []
+  ✗ …and it only QUIETS: a 300 s throttle, like the activity digest
+  ✓ no suggested rule anywhere wakes (no `immediate`)
+  ✓ the deprecated alias carries the same list
+  ✓ the advertisement carries the feature set
+  ✓ the manifest's own revision is self-consistent with the new tag
+
+4 passed, 7 failed

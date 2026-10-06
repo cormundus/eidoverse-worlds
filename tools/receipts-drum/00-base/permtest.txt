@@ -1,0 +1,88 @@
+[drum-scratch] owned world up: http://127.0.0.1:24438 pid=12300 nonce=441f6a7c-55fe-43ba-937e-55ed2629190c dir=$DRUM_SCRATCH_ROOT\2026-10-06T02-59-06-258Z-base-permtest-441f6a7c
+1. fresh world: first embodied joiner becomes owner
+  ✓ alice joined
+  ✓ auto-owner grant logged
+  ✓ owner spawns/shapes/assets freely
+2. second joiner: builder by default, no gen, no shaping
+  ✓ bob is builder
+  ✓ bob has no gen
+  ✓ world reports not-open
+  ✓ builder can spawn
+  ✓ builder cannot shape the sky
+  ✓ builder without gen cannot asset
+3. grants: owner-only, and +gen unlocks asset without demoting
+  ✓ non-owner cannot grant
+  ✓ +gen unlocks asset, spawn still works
+4. wildcard: /grant * visitor closes the world
+  ✓ unlisted id is now a visitor
+  ✓ explicit grant survives the wildcard
+  ✓ wildcard cannot be owner
+4b. force: builders detonate, visitors don't
+  ✓ visitor cannot emit a force
+  ✓ builder can emit a force
+  ✓ malformed force is refused, not history
+5. reserved agent names
+  ✓ agent name without token is rejected
+  ✓ agent name with its own token joins
+6. legacy ownerless world stays fully open
+  ✓ say is open to everyone
+7. upload accepts agent bearer tokens
+  ✓ bad token rejected
+  ✓ agent token accepted
+  ✓ door token accepted
+
+23 passed, 0 failed
+[drum-scratch] receipt {
+  "label": "base-permtest",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T02-59-06-258Z-base-permtest-441f6a7c\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T02-59-06-258Z-base-permtest-441f6a7c",
+  "port": 24438,
+  "origin": "http://127.0.0.1:24438",
+  "pid": 12300,
+  "nonce": "441f6a7c-55fe-43ba-937e-55ed2629190c",
+  "startedAt": "2026-10-06T02:59:06.258Z",
+  "endedAt": "2026-10-06T02:59:15.099Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T02-59-06-258Z-base-permtest-441f6a7c\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

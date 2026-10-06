@@ -1,0 +1,29 @@
+
+fold conformance — spec/fixtures vs shared/fold.js
+
+  ✗ 01-build: entities — $.entities.lamp: keys differ (ours+[born] theirs+[])
+  ✓ 01-build: mounts
+  ✓ 01-build: roles
+  ✓ 01-build: behaviors
+  ✗ 02-swing: entities — $.entities.swing1: keys differ (ours+[born] theirs+[])
+  ✓ 02-swing: mounts
+  ✓ 02-swing: roles
+  ✓ 02-swing: behaviors
+  ✓ 03-authority: entities
+  ✓ 03-authority: mounts
+  ✓ 03-authority: roles
+  ✓ 03-authority: behaviors
+  ✗ 04-overwrite: entities — $.entities.a: keys differ (ours+[born] theirs+[])
+  ✓ 04-overwrite: mounts
+  ✓ 04-overwrite: roles
+  ✓ 04-overwrite: behaviors
+  ✗ 05-lightpolicy: entities — $.entities.lamp: keys differ (ours+[born] theirs+[])
+  ✓ 05-lightpolicy: mounts
+  ✓ 05-lightpolicy: roles
+  ✓ 05-lightpolicy: behaviors
+  ✓ light merge: unauthored fields survive (comp/parent/yaw/scale + keep/day)
+  ✓ light merge: keep:false/day:true clear to absent, annotations still ride
+  ✓ light on a model id replaces wholesale (no comp/yaw/scale inherited)
+  ✗ stateToEntries roundtrips every preserved light field — $.entities.L.born: -1 vs 0
+
+19 passed, 5 failed

@@ -1,0 +1,26 @@
+
+— the seek reads the server clock —
+
+[sounds] radio1: no look line — text-tier residents will see only the file name; say what is playing
+  [32m✓[0m a playing sound built its graph
+  [32m✓[0m seeks to (serverNow − t0) mod duration = 12 s, not the skewed 17 s
+
+— the editor stamps t0 from the server clock —
+
+  [32m✓[0m sounds.js registered its editor
+  [32m✓[0m the editor offered the form
+  [32m✓[0m play committed a sound comp
+  [32m✓[0m its t0 is the server clock, not the machine's
+
+— a seek made before the clock is known is made again once it is —
+
+[sounds] radio2: no look line — text-tier residents will see only the file name; say what is playing
+  [32m✓[0m before any frame: the seek lands on the machine clock, 17 s
+  [32m✓[0m …and the handle remembers the clock was not known
+  [32m✓[0m a tick before the first frame changes nothing
+  [32m✓[0m the first tick after the clock is known seeks again: 12 s
+  [32m✓[0m …and marks the seek as made on the server clock
+  [32m✓[0m later ticks do not keep re-seeking
+  [32m✓[0m a sound seeked while the clock was known is never re-seeked
+
+13 passed, 0 failed

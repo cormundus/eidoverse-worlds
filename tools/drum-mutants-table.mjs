@@ -8,7 +8,9 @@
 // `tests`: 'circle' = tools/circle-test.ts (pure); 'tag' = tools/circle-tag-test.ts (pure); 'hydr' =
 // tools/hydration-test.ts (pure); 'hydr-live' = tools/hydration-live-test.ts (owned world, FOLD_EVERY=1); 'live' =
 // tools/circle-live-test.ts and 'comptest' = tools/comptest.ts, each in an
-// owned scratch world whose SERVER runs the mutant. 'probe' = tools/drum-probe.ts:
+// owned scratch world whose SERVER runs the mutant. 'mcpl' = tools/drum-mcpl-test.ts, live,
+// with the mutant in the TEST process too (it hosts the real WorldAgent and tool handler).
+// 'probe' = tools/drum-probe.ts:
 // real Chrome driven by Node (SFU_TEST_CHROME), the mutated BROWSER module served
 // to its pages by request interception.
 export const MUTANTS = [
@@ -134,4 +136,36 @@ export const MUTANTS = [
   { id: 'clear-leaks', seam: 'clearInstruments leaves nothing behind (rule 7, A8)',
     file: 'client/lib/instruments.js', find: 'for (const id of [...new Set([...voices.keys(), ...panners.keys()])]) dropVoice(id);', replace: '',
     tests: ['probe'], expectRed: ['a full clear (clearInstruments)'] },
+  // ---- commit 6, the text tier: 'mcpl' = tools/drum-mcpl-test.ts, the REAL WorldAgent and the
+  // REAL play tool handler in the test process (the preload mutates them there)
+  { id: 'line-per-phrase', seam: 'one eidoverse:circle line per circle per quiet window, never per phrase (§5, A9)',
+    file: 'mcpl/agent.ts', find: '      this.emitCircleLine(id, "began", slot.authors);\n    }\n    slot.authors.add(author);',
+    replace: '    }\n    this.emitCircleLine(id, "began", slot.authors);\n    slot.authors.add(author);',
+    tests: ['mcpl'], expectRed: ['exactly ONE line for four passages'] },
+  { id: 'agent-self-echo', seam: 'a body gets no line for its own playing (the self-echo rule)',
+    file: 'mcpl/agent.ts', find: 'if (typeof ph.author === "string" && ph.author !== this.name) this.noteCirclePlayed',
+    replace: 'if (typeof ph.author === "string") this.noteCirclePlayed',
+    tests: ['mcpl'], expectRed: ["under the listener's own name opens no line"] },
+  { id: 'radius-off', seam: 'the lifecycle line is radius-gated like every ambient sense',
+    file: 'mcpl/agent.ts', find: 'const pos = this.entities.get(id)?.pos;\n    if (pos && Math.hypot(pos[0] - this.pos.x, pos[2] - this.pos.z) > this.activityRadiusM) return;',
+    replace: 'const pos = this.entities.get(id)?.pos;',
+    tests: ['mcpl'], expectRed: ["beyond the listener's radius makes no line"] },
+  { id: 'quiet-early', seam: "'quiet' waits for the last queued step, then the window",
+    file: 'mcpl/agent.ts', find: 'Math.max(0, slot.until - this.serverNow()) + this.circleQuietMs', replace: 'this.circleQuietMs',
+    tests: ['mcpl'], expectRed: ['not before the last queued step had its time'] },
+  { id: 'end-silent', seam: 'ending a played circle says so once, at once',
+    file: 'mcpl/agent.ts', find: 'if (live) this.closeCircle(args.id, cb ? "ended" : "removed");', replace: 'if (false) this.closeCircle(args.id, cb ? "ended" : "removed");',
+    tests: ['mcpl'], expectRed: ['ending the circle while it is being played says so once'] },
+  { id: 'look-no-circle', seam: 'look() carries describeCircle: struck/queued pattern strings (§5)',
+    file: 'mcpl/agent.ts', find: 'L.push(`\\n[${e.id}] ${describeCircle(cb, drums, this.struck.get(e.id), { now: nowMs, initiatorPresent })}`);', replace: '',
+    tests: ['mcpl'], expectRed: ['the circle is described', "the listener's look shows the resident's pattern strings"] },
+  { id: 'initiator-invented', seam: 'no invented inheritance: an absent initiator is said plainly (carry 7)',
+    file: 'mcpl/agent.ts', find: 'const initiatorPresent = !init || init === this.name || this.people.has(init);', replace: 'const initiatorPresent = true;',
+    tests: ['mcpl'], expectRed: ['once bob has left, look says exactly who'] },
+  { id: 'tool-stale-voicegen', seam: "the tool reads the drum's CURRENT voiceGen; the resident never handles it (§5)",
+    file: 'mcpl/agent.ts', find: 'voice: a.voice, voiceGen: inst.voiceGen,', replace: 'voice: a.voice, voiceGen: 1,',
+    tests: ['mcpl'], expectRed: ['the tool reads the new voiceGen for you'] },
+  { id: 'tool-refusal-as-accept', seam: "the tool reports a refusal as a refusal, with the world's reason",
+    file: 'mcpl/tools.ts', find: 'if (!r.ok) return text(`refused${r.local ? "" : " by the world"}: ${r.why}. Nothing was played.`);', replace: '',
+    tests: ['mcpl'], expectRed: ["inside the count-in is refused, with the world's reason", 'refused by name, never swapped in'] },
 ];

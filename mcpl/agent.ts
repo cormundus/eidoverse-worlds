@@ -53,6 +53,8 @@ import { describeParticles, emitterTransition, transitionLine } from "../shared/
 import { describePicture } from "../shared/picture.js";
 import { describeCaptions } from "../shared/captions.js";
 import { describeSound } from "../shared/sound.js";
+import { DRUM_POLICY, gridOf, gridForGen, barStart, stepTime, newStruckWindow, noteStruck, describeCircle,
+  circleLifecycleLine } from "../shared/circle.js";
 import { describeStructure, describeHere, localizePoint, planStructure, routeLocal } from "../shared/structure.js";
 import { effectiveWorldTransform, type Effective } from "./effective.ts";
 import { makeVerdictCache, seatGateCore, nameFromAvatarPath } from "../client/lib/seatcore.js";
@@ -250,7 +252,7 @@ export class WorldAgent {
   pings: { ts: number; kind: "mention" | "approach" | "depart" | "whisper" | "reach" | "touch"; who: string; text?: string }[] = [];
   onPing: ((p: { ts: number; kind: string; who: string; text?: string }) => void) | null = null;
   /** live world events (say/arrive/leave/activity) — the channel fan-out hook */
-  onEvent: ((ev: { ts: number; kind: "say" | "arrive" | "leave" | "whisper" | "act" | "activity" | "weather" | "world-change"; who: string; text?: string; mention?: boolean }) => void) | null = null;
+  onEvent: ((ev: { ts: number; kind: "say" | "arrive" | "leave" | "whisper" | "act" | "activity" | "weather" | "world-change" | "circle"; who: string; text?: string; mention?: boolean }) => void) | null = null;
   /** MEDIA seam (#104 / #57): the SFU's publish path is gated to the EMBODIED
    *  PRIMARY (`relay-cred is the embodied primary's ask`, server.ts) — and for
    *  an agent, the primary IS this door. So an agent with a local synthesizer
@@ -290,6 +292,16 @@ export class WorldAgent {
   /** Open coalescing windows for world-change narration, keyed by entity id.
    *  See noteEmitter. */
   private emitterNarration = new Map<string, { announced: unknown; latest: unknown; actor: string; timer: ReturnType<typeof setTimeout> }>();
+  /** The drum circle, text tier (design rev 5 §5). Per circle: a window of
+   *  what was STRUCK or QUEUED since this body arrived — never what was
+   *  heard — which look() reads; and the slot behind the ONE eidoverse:circle
+   *  line per quiet window (never one per phrase or bar). */
+  private struck = new Map<string, ReturnType<typeof newStruckWindow>>();
+  private circlePlaying = new Map<string, { authors: Set<string>; until: number; timer: ReturnType<typeof setTimeout> | null }>();
+  private phraseN = 0;
+  private phraseWaits = new Map<number, (r: any) => void>();
+  /** How long a circle goes unstruck before it is "quiet" (DRUM_POLICY; tests shorten it). */
+  circleQuietMs: number = DRUM_POLICY.QUIET_MS;
   private lastNear = new Map<string, number>(); // participant -> last approach-ping ts
   /** approach re-arm: after a walk-up ping, the SAME person must actually go
    *  away (> REARM_RADIUS) before another boundary crossing can ever count —
@@ -682,6 +694,7 @@ export class WorldAgent {
             // provider reads as no.
             if (msg.yourRights) this.acceptEffectiveRights(msg.yourRights, "snapshot");
             this.entities.clear(); this.people.clear(); this.mounts.clear();
+            this.clearDrums();   // a fresh world: nothing observed yet, nothing being played
             this.bodyReader?.forget();
             this.selfBodyGeneration = ++this.bodyGenerationCounter;
             this.selfObservedAt = Date.now();
@@ -887,6 +900,15 @@ export class WorldAgent {
             break;
           case "pose":
             this.notePose(msg.id, msg.pose);
+            break;
+          case "phrase":
+            // someone else's drum phrase (the server never relays one back to
+            // its sender): presence, never logged, never an inbox item
+            this.notePhrase(msg);
+            break;
+          case "phrase-receipt":
+            this.phraseWaits.get(msg.n)?.(msg);
+            this.phraseWaits.delete(msg.n);
             break;
           case "frame":
             // batched embodied plane: latest pose per id, one message per tick.
@@ -1245,6 +1267,15 @@ export class WorldAgent {
     foldEntry(this.st, entry);
     simEntry(this.sim, entry, this.st);
     if (ENTITY_VERBS.has(verb)) this.reconcileFromFold();
+    // a circle that ends or is removed while being played says so once, now
+    if (args?.id != null && (this.circlePlaying.has(args.id) || this.struck.has(args.id))) {
+      const cb = this.entities.get(args.id)?.comp?.circle;
+      if (!cb || cb.ended) {
+        this.struck.delete(args.id);
+        if (live) this.closeCircle(args.id, cb ? "ended" : "removed");
+        else this.dropCircleSlot(args.id);
+      }
+    }
 
     // ---- side effects only below: percepts, supports, pings — no state ----
     if (verb === "spawn") {
@@ -1480,6 +1511,125 @@ export class WorldAgent {
     // never hold the process open for a decoration
     (timer as unknown as { unref?: () => void }).unref?.();
     this.emitterNarration.set(id, { announced, latest: announced, actor, timer });
+  }
+
+  /** A relayed drum phrase (§5): it enters the circle's struck window — what
+   *  was struck or queued, by whom, never what was heard — and may open the
+   *  circle's one lifecycle line. Never an inbox item, never a channel event
+   *  per phrase: a resident's chronicle keeps whatever arrives as an event,
+   *  and a jam is not to be retained by accident. */
+  private notePhrase(ph: any) {
+    if (typeof ph?.circle !== "string" || typeof ph.voice !== "string") return;
+    const c = this.entities.get(ph.circle)?.comp?.circle;
+    const g = c && !c.ended ? gridForGen(c, ph.gen) : null;
+    if (!g) return;                                  // stale on arrival: nothing to note
+    const win = this.struck.get(ph.circle) ?? newStruckWindow();
+    this.struck.set(ph.circle, win);
+    try { noteStruck(win, ph, { steps: gridOf(g).steps }); } catch { return; }
+    if (typeof ph.author === "string" && ph.author !== this.name) this.noteCirclePlayed(ph.circle, ph.author, g, ph);
+  }
+
+  /** The eidoverse:circle lifecycle (§5). The first phrase in a quiet period,
+   *  within this body's radius, speaks once ("began playing"); every later
+   *  phrase only pushes the quiet deadline out past its own last step; the
+   *  circle going unstruck for circleQuietMs, ending, or being removed speaks
+   *  once more. Silent for this body's own playing (the self-echo rule). */
+  private noteCirclePlayed(id: string, author: string, g: any, ph: any) {
+    const pos = this.entities.get(id)?.pos;
+    if (pos && Math.hypot(pos[0] - this.pos.x, pos[2] - this.pos.z) > this.activityRadiusM) return;
+    const end = ph.live ? stepTime(g, ph.bar, ph.step) : barStart(g, ph.bar + (ph.bars ?? 1));
+    let slot = this.circlePlaying.get(id);
+    if (!slot) {
+      slot = { authors: new Set([author]), until: end, timer: null };
+      this.circlePlaying.set(id, slot);
+      this.emitCircleLine(id, "began", slot.authors);
+    }
+    slot.authors.add(author);
+    slot.until = Math.max(slot.until, end);
+    if (slot.timer) clearTimeout(slot.timer);
+    slot.timer = setTimeout(() => this.closeCircle(id, "quiet"), Math.max(0, slot.until - this.serverNow()) + this.circleQuietMs);
+    (slot.timer as any).unref?.();   // never hold the process open for a drum
+  }
+
+  private emitCircleLine(id: string, how: "began" | "quiet" | "ended" | "removed", authors: Set<string>) {
+    const e = this.entities.get(id);
+    const text = circleLifecycleLine(id, e?.comp?.circle ?? null, how, [...authors]);
+    this.onEvent?.({ ts: Date.now(), kind: "circle", who: [...authors][0] ?? "world", text });
+  }
+
+  private closeCircle(id: string, how: "quiet" | "ended" | "removed") {
+    const slot = this.circlePlaying.get(id);
+    if (!slot) return;
+    this.dropCircleSlot(id);
+    this.emitCircleLine(id, how, slot.authors);
+  }
+
+  private dropCircleSlot(id: string) {
+    const slot = this.circlePlaying.get(id);
+    if (slot?.timer) clearTimeout(slot.timer);
+    this.circlePlaying.delete(id);
+  }
+
+  /** A fresh world (snapshot, travel): nothing observed, nothing being played,
+   *  no receipt still awaited. Silent — a reconnect is not news about a drum. */
+  private clearDrums() {
+    for (const id of [...this.circlePlaying.keys()]) this.dropCircleSlot(id);
+    this.struck.clear();
+    for (const done of this.phraseWaits.values()) done(null);
+    this.phraseWaits.clear();
+  }
+
+  /** The circle this resident hears as SOUNDING now: the outgoing grid while
+   *  a tempo change is still pending, else the current one (§2.1). */
+  private soundingGen(c: any, now = this.serverNow()): number {
+    return c.prev && now < c.t0 ? c.prev.gen : c.gen;
+  }
+
+  /** Play one passage on a drum (§5, the `play` tool). The circle's gen and the
+   *  drum's voiceGen come from folded state — the resident never handles
+   *  either. Resolves the server's receipt (the ONLY feedback), a local
+   *  refusal when there is nothing to play on, or `unknown` when no receipt
+   *  arrives in time. A resend after `unknown` is a NEW passage: if the first
+   *  one did land, its planned slots refuse the second by name. */
+  async play(a: { voice: string; pattern: string; circle?: string; velocity?: string; bar?: number | "next"; bars?: number },
+             timeoutMs = 5000): Promise<any> {
+    const inst = this.entities.get(a.voice)?.comp?.instrument;
+    if (!inst || inst.ended) return { ok: false, local: true, why: `no drum "${a.voice}" here — look() lists each circle's drums by id` };
+    const circle = a.circle ?? inst.circle;
+    const c = this.entities.get(circle)?.comp?.circle;
+    if (!c) return { ok: false, local: true, why: `no circle "${circle}" here` };
+    if (c.ended) return { ok: false, local: true, why: `the circle "${circle}" has ended` };
+    if (!this.ws || this.ws.readyState !== 1) return { ok: false, local: true, why: "not connected to the world" };
+    const n = this.phraseN++;
+    const gen = this.soundingGen(c);
+    const msg: Record<string, unknown> = { type: "phrase", circle, gen, voice: a.voice, voiceGen: inst.voiceGen,
+      bar: a.bar ?? "next", pattern: a.pattern, n };
+    // a pattern written bar by bar with "|" says how many bars it is; the
+    // world still judges the count (a convenience, never a reinterpretation)
+    const bars = a.bars ?? (typeof a.pattern === "string" && a.pattern.includes("|") ? a.pattern.split("|").length : undefined);
+    if (bars !== undefined) msg.bars = bars;
+    if (a.velocity !== undefined) msg.velocity = a.velocity;
+    const got = new Promise<any>((done) => {
+      this.phraseWaits.set(n, done);
+      const t = setTimeout(() => { if (this.phraseWaits.delete(n)) done(null); }, timeoutMs);
+      (t as any).unref?.();
+    });
+    this.ws.send(JSON.stringify(msg));
+    const r = await got;
+    if (!r) return { ok: false, unknown: true, n, why: `no receipt within ${timeoutMs / 1000} s — sharing unknown` };
+    if (r.ok) {
+      // my own passage enters my window as QUEUED (the relay never comes back to me)
+      const g = gridForGen(this.entities.get(circle)?.comp?.circle, r.gen);
+      if (g) {
+        const win = this.struck.get(circle) ?? newStruckWindow();
+        this.struck.set(circle, win);
+        try {
+          noteStruck(win, { voice: a.voice, gen: r.gen, bar: r.bar, bars: r.bars, pattern: String(a.pattern).replace(/\|/g, ""), author: this.name },
+            { steps: gridOf(g).steps, mine: true });
+        } catch { /* the receipt is the truth; a window that can't note it just stays shorter */ }
+      }
+    }
+    return r;
   }
 
   /** The push half of sky perception (the pull half is look()). Runs at 1Hz
@@ -3162,6 +3312,14 @@ export class WorldAgent {
       // is — never by the audio. The radio's music player; captions (#187)
       // on the same entity say the words.
       if (c.sound) aff.push(describeSound(c.sound));
+      // A drum circle and its drums (§5): the circle's grid and what was
+      // struck are in their own block below; a drum names its strokes, which
+      // are the letters a `play` pattern may use.
+      if (c.circle) aff.push(c.circle.ended ? `a drum circle (ended)` : `a drum circle (see below)`);
+      if (c.instrument && !c.instrument.ended) {
+        aff.push(`drum "${c.instrument.name}" in circle ${c.instrument.circle}, strokes ${Object.keys(c.instrument.strokes ?? {}).join(" ")}`
+          + `${c.instrument.look ? ` — ${c.instrument.look}` : ""}`);
+      }
       // locked = nailed down: the server refuses every move/replace/remove on
       // it. Saying so here saves an agent a refused verb round-trip.
       if (c.lock) aff.push(`🔒 locked (immovable until comp {id, type: "lock", data: null})`);
@@ -3181,7 +3339,7 @@ export class WorldAgent {
       // structure component buys: `components: structure` would be true and
       // useless, where "a building: 2 rooms, 14 walls, 1 door" is actionable.
       if (c.structure) { try { aff.push(describeStructure(c.structure)); } catch { /* a broken house is not a broken look() */ } }
-      const extra = Object.keys(c).filter((k) => !["sockets", "reactions", "motion", "particles", "picture", "captions", "sound", "lock", "guard", "structure"].includes(k));
+      const extra = Object.keys(c).filter((k) => !["sockets", "reactions", "motion", "particles", "picture", "captions", "sound", "circle", "instrument", "lock", "guard", "structure"].includes(k));
       if (extra.length) aff.push(`components: ${extra.join(", ")}`);
       const ride = this.mounts.get(e.id);
       if (ride) aff.push(`mounted on ${ride.to}${f.ok && f.moving ? ` (riding its ${f.moving})` : ""}`);
@@ -3204,6 +3362,27 @@ export class WorldAgent {
     }
     if (ents.some((e) => e.comp?.sockets || e.comp?.reactions)) {
       L.push(`  (interact via world_verb: use {id, action} · sit/ride via mount {id: "${this.name}", to, slot} — both open to everyone; dismount {id: "${this.name}"} to get off)`);
+    }
+
+    // Drum circles (§5): the grid, any count-in or scheduled tempo change, and
+    // what was struck or queued as pattern strings over the bars this body
+    // observed — the same describeCircle every client renders. Never "heard";
+    // never a history from before this body arrived.
+    for (const e of this.entities.values()) {
+      const cb = e.comp?.circle;
+      if (!cb || cb.ended) continue;
+      const drums: Record<string, any> = {};
+      for (const d of this.entities.values()) {
+        const ib = d.comp?.instrument;
+        if (ib && !ib.ended && ib.circle === e.id) drums[d.id] = ib;
+      }
+      const init = cb.initiator?.id;
+      const initiatorPresent = !init || init === this.name || this.people.has(init);
+      L.push(`\n[${e.id}] ${describeCircle(cb, drums, this.struck.get(e.id), { now: nowMs, initiatorPresent })}`);
+      if (Object.keys(drums).length) {
+        const g = gridOf(gridForGen(cb, this.soundingGen(cb, nowMs)));   // the grid `play` writes for
+        L.push(`  (play {voice, pattern}: one bar = ${g.steps} cells, a stroke letter or "." each; bars joined by "|". Drums: ${Object.keys(drums).join(", ")})`);
+      }
     }
 
     const unread = this.inbox.slice(this.inboxCursor);

@@ -50,6 +50,7 @@ export const DRUM_POLICY = Object.freeze({
   H_BARS: 16,            // horizon: a phrase's last bar ≤ currentBar + H; a tempo change's minimum lead
   PHRASE_RATE_PER_S: 16, // per-leg phrase budget, refused WITH a receipt
   RECEIPT_WINDOW: 64,    // stored receipts per (leg, circle), for idempotent resends
+  QUIET_MS: 60_000,      // perception only: a circle unstruck this long after its last step is "quiet" (§5's one line per window)
 });
 
 export const BPM_MIN = 40, BPM_MAX = 240;
@@ -464,6 +465,20 @@ export function describeCircle(c, instruments, win, { now, initiatorPresent = tr
   }
   if (vs.some(([, v]) => Object.values(v.bars).some((b) => b.queued))) lines.push(`  (* = yours, queued)`);
   return lines.join('\n');
+}
+
+/** The ONE eidoverse:circle line (§5): a circle within a resident's radius
+ *  began playing, went quiet, ended, or was removed. Who plays it and its grid;
+ *  never a pattern, never what was heard (what was struck is look()'s). `c`
+ *  may be null (a removed circle). Pure. */
+export function circleLifecycleLine(id, c, how, authors) {
+  const who = authors?.length ? authors.join(', ') : 'someone';
+  if (how === 'began') {
+    const grid = c && !c.ended ? ` (${c.bpm} BPM, ${c.meter}/4)` : '';
+    return `a drum circle near you began playing [${id}]${grid}: ${who}. What is struck is in look().`;
+  }
+  const what = how === 'quiet' ? 'went quiet' : how === 'ended' ? 'ended' : 'was removed';
+  return `the drum circle [${id}] near you ${what} (played by ${who})`;
 }
 
 // ---- instrument-set: shape, door, fold --------------------------------------

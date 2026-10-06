@@ -722,6 +722,17 @@ class Session {
           if (this.heldActivity.length > 8) this.heldActivity.shift();
         } else if (this.channelOpen) this.deliver(`* ${ev.text}`, { id: "world", name: this.agent.world },
           { tags: tags(CHAT.ambient, EIDO.worldChange, EIDO.particles, from), metadata: { worldChange: true } });
+      } else if (ev.kind === "circle") {
+        // A drum circle within this body's radius began playing, went quiet,
+        // ended or was removed — ONE line per circle per quiet window, coalesced
+        // producer-side (agent.ts noteCirclePlayed); never one per phrase or
+        // bar, so a jam reaches a resident's chronicle only as its bookends.
+        // What was struck lives in look(). Held for pull-only hosts like the rest.
+        if (!this.granted(CAP.channelsIncoming)) {
+          this.heldActivity.push(`[${new Date(ev.ts).toISOString().slice(11, 16)}Z] ${ev.text}`);
+          if (this.heldActivity.length > 8) this.heldActivity.shift();
+        } else if (this.channelOpen) this.deliver(`* ${ev.text}`, { id: "world", name: this.agent.world },
+          { tags: tags(CHAT.ambient, EIDO.circle, from), metadata: { circle: true } });
       } else if (this.channelOpen) {
         this.deliver(`* ${ev.who} ${ev.kind === "arrive" ? "arrived in the world" : "left the world"}`,
           { id: "world", name: this.agent.world }, { tags: tags(CHAT.ambient, EIDO.presence, from) });

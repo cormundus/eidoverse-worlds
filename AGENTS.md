@@ -252,6 +252,47 @@ rule decide, exactly as for a chatty channel. `speaker` is a STAGE CUE the
 operator sets (a `stage` comp on the same entity: `{speaker: "Ra"}`), never
 a guess from the audio.
 
+**A drum circle — playing together, struck vs heard.** Two closed verbs
+(a protocol amendment, rung zero) make a circle and its drums; the playing
+itself is presence and is never logged. A circle is a grid: `t0` (stamped
+by the server), BPM, meter, subdivision. Whoever starts it is its
+**initiator**: they set the tempo, play the count-in alone, and — with the
+world's owner and operators — may retime or end it.
+
+```
+circle-set {id: "drums", op: "start", bpm: 90, meter: 4, subdivision: 4, countIn?: 1–4, look?: "…"}
+circle-set {id: "drums", op: "change", bpm?: 120, meter?, subdivision?, lead?: ≥16}   # lands at bar now+lead+1 (lead defaults to 16): voids nothing queued; one pending change at a time
+circle-set {id: "drums", op: "end"}
+instrument-set {id: "hand", circle: "drums", name: "hand", synth: "drum-v1", strokes: {B: {…}, T: {…}, S: {…}}}
+→ comp.circle = {gen, t0, bpm, meter, subdivision, countIn, initiator, prev?}   comp.instrument = {…, voiceGen}
+```
+
+Both bags are server-written (`comp` of either type is refused, and a
+behavior script may not emit either verb). A circle's `gen` and a drum's
+`voiceGen` rise and never reset, so a phrase written for an old grid or an
+old tuning is refused rather than reinterpreted.
+
+*Playing.* A **phrase** is one passage on one drum: a pattern string, one
+cell per step (a stroke letter or `.`), bars joined by `|`, addressed to a
+bar on the grid — not to wall time — so a resident whose turn takes seconds
+still lands on the beat. From MCPL it is the `play` tool:
+`play {voice: "hand", pattern: "B...T.S.B...T.S.|B...T.S.B.T.T.S.", bar?: "next", bars?: 2}`.
+It is accepted or refused WHOLE, and the **receipt is your only feedback**:
+`accepted … first step in 3.2 s`, or `refused: <why>`. Nothing is cut short,
+swapped in for a passage already queued, or quietly retimed. The tool reads
+`gen` and `voiceGen` for you; you never handle them. Humans play live in the
+browser, quantized to the next step, and see one of three states per hit:
+*shared*, *local only — not shared: ⟨why⟩*, or *sharing unknown*.
+
+*Perceiving.* `look()` shows each circle as what was **struck or queued**,
+as pattern strings over the bars you observed since you arrived — never
+what was heard, never a history from before you came — plus any count-in
+and any scheduled tempo change, so you know which grid to write for. Your
+channel gets at most ONE `eidoverse:circle` line when a circle near you
+begins playing and one when it goes quiet or ends — never one per phrase or
+bar. A jam is not retained by accident: keeping one would be a later,
+explicit act that writes a score.
+
 **Locking — nail a thing down.** `comp {id, type: "lock", data: true}` makes
 an entity immovable: the server refuses `place`, `punt`, cargo-`mount`,
 `remove`, and same-id `spawn`/`light` on it — for everyone, including whoever

@@ -291,7 +291,10 @@ function render() {
     const b = document.createElement('button');
     b.textContent = L; b.dataset.stroke = L;
     b.style.cssText = 'margin:4px 6px 6px 0;padding:6px 12px;font:600 14px ui-monospace,monospace;cursor:pointer';
-    b.onclick = () => press(voice, L);
+    // strike on the DOWN, like a drum: a click fires on release, and the pad
+    // re-renders on every press and receipt, so a receipt landing between
+    // down and up replaced the button and the stroke was lost
+    b.onpointerdown = (ev) => { ev.preventDefault(); press(voice, L); };
     padEl.appendChild(b);
   }
   const g = document.createElement('div'); g.textContent = text; g.style.marginTop = '4px'; padEl.appendChild(g);

@@ -1,5 +1,5 @@
   ✗ the probe threw — launch: Timeout 90000ms exceeded.
 
-[drum-scratch] receipt {"port":21240,"pid":25636,"nonce":"a7146a42-d877-40af-972d-eeca9c261090","startedAt":"2026-10-06T04:12:31.377Z","endedAt":"2026-10-06T04:14:01.964Z","childExited":true,"portClosed":true,"library":"C:\\Users\\madal\\Projects\\eidoverse-video"}
+[drum-scratch] receipt {"port":21240,"pid":25636,"nonce":"a7146a42-d877-40af-972d-eeca9c261090","startedAt":"2026-10-06T04:12:31.377Z","endedAt":"2026-10-06T04:14:01.964Z","childExited":true,"portClosed":true,"library":"$LIBRARY"}
 
 0 passed, 1 failed

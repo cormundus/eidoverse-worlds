@@ -117,7 +117,8 @@ export async function scratchWorld({ label = 'drum', library = null, env: extraE
     // Receipts get committed and pushed: name places by role, never by the
     // machine's home path (no username, nothing name-like, leaves this host).
     const pub = JSON.parse(JSON.stringify(receipt, (k, v) => typeof v !== 'string' ? v
-      : v.split(SCRATCH_ROOT).join('$DRUM_SCRATCH_ROOT').split(ROOT).join('$REPO')));
+      : v.split(SCRATCH_ROOT).join('$DRUM_SCRATCH_ROOT').split(ROOT).join('$REPO')
+        .split(library ? resolve(library) : '\u0000').join('$LIBRARY')));   // the asset library, by role too
     writeFileSync(join(dir, 'receipt.json'), JSON.stringify(pub, null, 2) + '\n');
     return pub;
   };

@@ -15,6 +15,14 @@
 
 import { foldSkyEntry } from './forecast.js';
 import { normalizeCaptionArgs, captionRefusal, foldCaption } from './captions.js';
+import { foldCircleSet, foldInstrumentSet } from './circle.js';
+
+/** Components with ONE writer path — a verb whose door stamps server-owned
+ *  fields — so an ordinary `comp` of these types is refused by the door
+ *  (vComp) AND here, and a hand-edited log cannot overwrite what the
+ *  sequencer folded (the drum circle, shared/circle.js). `captions` keeps its
+ *  own older check below; whether it joins this list is Weft and Ra's call. */
+export const PROTECTED_COMPS = Object.freeze(['circle', 'instrument']);
 
 /** An entity's CREATION GENERATION: the seq of the entry that made this
  *  object, kept across updates of the same object (a partial re-light, a
@@ -283,6 +291,28 @@ export function foldEntry(st, e) {
       if (!Object.keys(ent.comp).length) delete ent.comp;
       return;
     }
+    case "circle-set": {
+      // A drum circle's grid (shared/circle.js). The door stamped t0, gen and
+      // initiator; the fold reads them back and refuses anything that is not
+      // the exact successor generation, so a hand-edited log stays total.
+      const ent = st.entities[a?.id];
+      if (!ent) return;
+      const bag = foldCircleSet(ent.comp?.circle, a);
+      if (bag === undefined) return;
+      ent.comp ??= {};
+      ent.comp.circle = bag;
+      return;
+    }
+    case "instrument-set": {
+      // A drum (shared/circle.js): the door stamped voiceGen; same rule.
+      const ent = st.entities[a?.id];
+      if (!ent) return;
+      const bag = foldInstrumentSet(ent.comp?.instrument, a);
+      if (bag === undefined) return;
+      ent.comp ??= {};
+      ent.comp.instrument = bag;
+      return;
+    }
     case "remove": {
       // Anything riding the removed thing steps off with its absolute pose
       // stamped — remove the truck, the cargo lands where the truck stood.
@@ -430,6 +460,7 @@ export function foldEntry(st, e) {
       // refuses a comp of that type (vComp); the fold refuses it too, so a
       // hand-edited log cannot overwrite what the sequencer folded.
       if (a.type === "captions") return;
+      if (PROTECTED_COMPS.includes(a.type)) return;   // circle-set / instrument-set only
       ent.comp ??= {};
       if (a.data == null) delete ent.comp[a.type]; else ent.comp[a.type] = a.data;
       if (!Object.keys(ent.comp).length) delete ent.comp;

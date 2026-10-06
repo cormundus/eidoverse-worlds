@@ -1,0 +1,17 @@
+
+radio toggle — world "radiotest-iqnvyt"
+
+  ✓ placer set up radio1 with a paused sound, an interaction, and the radio script — no errors
+  ✓ a visitor's toggle switches it ON
+  ✓ …with a fresh t0 stamped by the script (epoch ms, now-ish)
+  ✓ …and the rest of the bag intact (src, look, volume)
+  ✓ the visitor's own verb was accepted (use is rank 0)
+  ✓ a second toggle switches it OFF and drops t0
+  ✓ an unrelated action leaves it alone
+  ✓ switching on again stamps a NEWER t0 (a restart, not a resume)
+  ✓ bound to a thing with no sound comp, the script logs and emits nothing (no error, no comp)
+  ✓ negative control: a responder with the wrong nonce is refused, not judged
+  ✓ negative control: a responder with no nonce field is refused as a stale listener
+
+11 passed, 0 failed
+

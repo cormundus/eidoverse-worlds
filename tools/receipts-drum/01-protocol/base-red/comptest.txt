@@ -1,0 +1,97 @@
+[drum-scratch] owned world up: http://127.0.0.1:25285 pid=11652 nonce=1d29d48c-b6d1-48b8-8cf0-a3d0ab1c76f4 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-12-05-269Z-base-red-comptest-1d29d48c
+
+components/mounts/motion matrix — world "comptest-sywk53"
+
+  ✓ owner authored swing + components without error
+  ✓ visitor cannot author components
+  ✓ visitor cannot author motion directly
+  ✓ push → world-authored motion entry
+  ✓ push carries provenance
+  ✓ push sets the pendulum moving
+  ✓ second push re-expresses the same pendulum (fresh t0)
+  ✓ amplitude stays capped
+  ✓ use on a thing with no reactions does nothing
+  ✓ flight recorder: denied verbs are recorded with the reason
+  ✓ flight recorder: fired reactions carry cause→effect seqs
+  ✓ flight recorder: a use with nothing to react says why
+  ✓ history: verb filter isolates the causes
+  ✓ a visitor may mount HIMSELF (sitting is using, not building)
+  ✓ a visitor may not mount cargo
+  ✓ mount insists on an existing parent
+  ✓ component data is bounded (8KB)
+  ✓ owner can author an emitter
+  ✓ an emitter is ONE log entry, never one per particle
+  ✓ a visitor cannot light a fire on someone's swing
+  ✓ fold: swing carries its component bag
+  ✓ fold: unknown component types survive verbatim
+  ✓ fold: motion survives with the pushed amplitude
+  ✓ fold: bob's body is mounted on the seat
+  ✓ fold: cargo rides the swing
+  ✓ removing the parent lands the cargo where the parent stood
+  ✓ removing the parent unseats the sitter too
+  ✓ the swing is gone
+  ✓ visitor cannot author lights
+  ✓ fold: light re-issue merges — intensity changed
+  ✓ fold: light re-issue merges — color/range/pos untouched
+  ✓ fold: keep flag survives the fold
+  ✓ keep: false clears the exemption without touching the rest
+  ✗ comp cannot write a circle (circle-set is its one writer path) — mount wants {id, to: <existing entity>, slot?, offset?, yaw?}; component data too large (8KB max) — put big things in /upload and reference the path; verb not allowed: circle-set — the verb set is closed by design; extend state with comp {id, type, data}, interactions with use {id, action}, semantics with behavior scripts (see AGENTS.md). New verbs are protocol amendments.; verb not allowed: instrument-set — the verb set is closed by design; extend state with comp {id, type, data}, interactions with use {id, action}, semantics with behavior scripts (see AGENTS.md). New verbs are protocol amendments.
+  ✗ fold: circle-set folds the server's stamps (gen 1, not the client's 7) — {"bpm":60}
+  ✗ fold: instrument-set folds with voiceGen 1
+
+33 passed, 3 failed
+
+[drum-scratch] receipt {
+  "label": "base-red-comptest",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-12-05-269Z-base-red-comptest-1d29d48c\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-12-05-269Z-base-red-comptest-1d29d48c",
+  "port": 25285,
+  "origin": "http://127.0.0.1:25285",
+  "pid": 11652,
+  "nonce": "1d29d48c-b6d1-48b8-8cf0-a3d0ab1c76f4",
+  "startedAt": "2026-10-06T03:12:05.269Z",
+  "endedAt": "2026-10-06T03:12:13.491Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-12-05-269Z-base-red-comptest-1d29d48c\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

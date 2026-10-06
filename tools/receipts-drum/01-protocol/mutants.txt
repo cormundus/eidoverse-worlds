@@ -1,0 +1,52 @@
+
+control (preload active, no mutant):
+  ✓ circle: 61 passed, 0 failed
+  ✓ live: 27 passed, 0 failed
+  ✓ comptest: 36 passed, 0 failed
+
+mutants:
+  ✓ KILLED emit-gate-open — script emits may not write circle-set/instrument-set (§2.6)
+      live 26 passed, 1 failed
+      red: ✗ the emit is refused by name — []
+  ✓ KILLED guard-list-off — the two verbs are in GUARD_AUTHORED (§2.1)
+      live 26 passed, 1 failed
+      red: ✗ a builder who isn't the placer is refused on a GUARDED drum (GUARD_AUTHORED) — null
+  ✓ KILLED vcomp-door-open — vComp refuses comp of a protected type (one writer path)
+      live 25 passed, 2 failed · comptest 35 passed, 1 failed
+      red: ✗ even the owner's comp of type circle is refused — null
+      red: ✗ comp cannot write a circle (circle-set is its one writer path) — mount wants {id, to: <existing entity>, slot?, offset?, yaw?}; component 
+  ✓ KILLED fold-comp-open — the fold refuses comp of a protected type
+      circle 58 passed, 3 failed
+      red: ✗ a plain comp of type circle folds to nothing
+  ✓ KILLED fold-start-successor — a start folds only as the exact successor generation
+      circle 59 passed, 2 failed
+      red: ✗ a start with a non-successor gen folds to nothing
+      red: ✗ a restart stamped gen 1 (a reset) folds to nothing
+  ✓ KILLED gen-resets — generations never reset on an entity (§2.5, the stale-dup fix)
+      circle 59 passed, 2 failed · live 26 passed, 1 failed
+      red: ✗ after end, a new start continues the generation: gen 4, never 1 — {"ok":true,"args":{"id":"drums","op":"start","bpm":100,"meter":4,"subdiv
+      red: ✗ a new start continues: gen 3, never 1 — {"id":"drums","op":"start","bpm":100,"meter":4,"subdivision":4,"countIn":2,"t0":1791256486750,"gen
+  ✓ KILLED lead-floor-off — a tempo change needs at least H bars of lead (§2.1)
+      circle 60 passed, 1 failed · live no summary (exit 1)
+      red: ✗ lead 15 (< H) is refused
+      red: ✗ lead 15 (< H = 16) is refused — null
+  ✓ KILLED initiator-rule-off — only the initiator, owner or an operator may change or end (§2.1)
+      circle 60 passed, 1 failed · live no summary (exit 1)
+      red: ✗ a non-initiator may not change it
+      red: ✗ a builder who is not the initiator is refused — null
+  ✓ KILLED pending-rule-off — one pending change at a time; no change before the start (§2.1)
+      circle 59 passed, 2 failed · live 19 passed, 8 failed
+      red: ✗ before the circle has started (and no prior change), a change is refused
+      red: ✗ a second change while one is pending is refused, naming bar 20
+      red: ✗ a change before the circle has started is refused — null
+      red: ✗ a second change while one is pending is refused, naming its bar — null
+  ✓ KILLED fold-voicegen-successor — an instrument edit folds only as voiceGen + 1 (§2.2)
+      circle 60 passed, 1 failed
+      red: ✗ a non-successor voiceGen folds to nothing
+  ✓ KILLED synth-open — an unknown synth fails closed (§2.2)
+      circle 59 passed, 2 failed · live 26 passed, 1 failed
+      red: ✗ an unknown synth is refused at the door
+      red: ✗ an unknown synth folds to nothing (fails closed)
+      red: ✗ an unknown synth is refused — null
+
+11/11 mutants killed; control green

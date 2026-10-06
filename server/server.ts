@@ -116,6 +116,13 @@ function retireRelayLeg(w: World, id: string) {
 // #192; whichever lands second merges clean.)
 wireBehaviorStore(OPT_DIR);
 wireBehaviorGate((w, author, verb, args, authorSub) => {
+  // A script emit commits WITHOUT running the verb's validator (behaviors.ts
+  // hostEmit → commit). The drum circle's two verbs exist to have their doors
+  // stamp server-owned fields (t0, gen, initiator, voiceGen); a script cannot
+  // run that door, so it may not write those entries (design rev 5, §2.6).
+  if (verb === "circle-set" || verb === "instrument-set") {
+    return `script emits may not "${verb}" — its door stamps fields only the server may write; play a circle through phrases, not verbs`;
+  }
   const needs = VERB_NEEDS[verb];
   if (!needs) return `verb not allowed: ${verb}`;
   const rights = rightsOf((w as unknown as World).state, author, authorSub);

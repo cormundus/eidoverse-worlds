@@ -16,10 +16,11 @@ import { join } from "node:path";
 import { VERB_RATE, OPT_DIR } from "./config.ts";
 import { isAdminId, rightsOf, worldHasOwner, VERB_NEEDS, lockRefusal, guardRefusal, captionDeedRefusal } from "./rights.ts";
 import { normalizeCaptionArgs, captionRefusal } from "../shared/captions.js";
+import { normalizeCircleSetArgs, stampCircleSet, normalizeInstrumentSetArgs, stampInstrumentSet } from "../shared/circle.js";
 import { lintMotion, lintParticles } from "./lint.ts";
 import { reactToUse } from "./reactions.ts";
 import { behaviorLimits } from "./behaviors.ts";
-import { ROLE_RANK, type LogEntry, type WorldState } from "../shared/fold.js";
+import { ROLE_RANK, PROTECTED_COMPS, type LogEntry, type WorldState } from "../shared/fold.js";
 import { SIM_ID } from "../shared/sim.js";
 import { boxOf, worldLibs } from "./boxes.ts";
 
@@ -224,6 +225,13 @@ function vComp(ctx: VerbCtx, args: Record<string, unknown>) {
     w.debug("rejected", { who: c.id, verb: "comp", why: `type captions is server-written on ${id}` });
     return { error: `"captions" is written by the caption verb, not by comp — grant a captioner the deed (grant {id, caption: "${id}"}) and let it write` };
   }
+  // the drum circle's bags have one writer path each, for the same reason
+  // (shared/circle.js): their doors stamp server-owned fields
+  if ((PROTECTED_COMPS as readonly string[]).includes(type)) {
+    const door = type === "circle" ? "circle-set" : "instrument-set";
+    w.debug("rejected", { who: c.id, verb: "comp", why: `type ${type} is server-written on ${id}` });
+    return { error: `"${type}" is written by the ${door} verb, not by comp — its door stamps fields only the server may write` };
+  }
   if (args.data !== undefined && args.data !== null
     && JSON.stringify(args.data).length > 8192) {
     w.debug("rejected", { who: c.id, verb: "comp", why: `data too large (8KB max) on ${id}.${type}` });
@@ -264,6 +272,56 @@ function vCaption(ctx: VerbCtx, args: Record<string, unknown>) {
     return { error: why };
   }
   return { args: stamped };
+}
+
+/** A drum circle's grid: start, change (with lead time), end. Shape by the
+ *  shared meaning module, then the DOOR stamps t0, gen and initiator against
+ *  the folded circle (shared/circle.js stampCircleSet). Who may change or end
+ *  it: the initiator, the world's owner, or an operator; rank and guard are
+ *  the shell's (VERB_NEEDS, GUARD_AUTHORED). t0 is the server's clock at THIS
+ *  moment of acceptance, never the client's and never the message-arrival
+ *  `now` (a deferred verb runs later than it arrived). */
+function vCircleSet(ctx: VerbCtx, args: Record<string, unknown>) {
+  const { w, c } = ctx;
+  const n = normalizeCircleSetArgs(args);
+  if (!n.ok) {
+    w.debug("rejected", { who: c.id, verb: "circle-set", why: n.why });
+    return { error: n.why };
+  }
+  const ent = (w.state.entities as Record<string, { comp?: { circle?: any } } | undefined>)[n.args.id];
+  if (!ent) return { error: `"${n.args.id}" is not here — a circle needs a thing to live on` };
+  const folded = ent.comp?.circle;
+  const rights = rightsOf(w.state, c.id, c.sub);
+  const init = folded?.initiator;
+  const isInitiator = !!init && init.id === c.id && (!init.sub || init.sub === c.sub);
+  const mayRetime = isInitiator || ROLE_RANK[rights.role] >= ROLE_RANK.owner;
+  const r = stampCircleSet(folded, n.args, { now: Date.now(), who: { id: c.id, sub: c.sub }, mayRetime });
+  if (!r.ok) {
+    w.debug("rejected", { who: c.id, verb: "circle-set", why: r.why });
+    return { error: r.why };
+  }
+  return { args: r.args };
+}
+
+/** A drum: shape, then the DOOR stamps voiceGen (every edit bumps it, end
+ *  keeps it). The circle it names must be a thing in this world. */
+function vInstrumentSet(ctx: VerbCtx, args: Record<string, unknown>) {
+  const { w, c } = ctx;
+  const n = normalizeInstrumentSetArgs(args);
+  if (!n.ok) {
+    w.debug("rejected", { who: c.id, verb: "instrument-set", why: n.why });
+    return { error: n.why };
+  }
+  const ents = w.state.entities as Record<string, { comp?: { instrument?: any } } | undefined>;
+  const ent = ents[n.args.id];
+  if (!ent) return { error: `"${n.args.id}" is not here — an instrument needs a thing to live on` };
+  if (!n.args.end && !ents[String(n.args.circle)]) return { error: `no circle entity "${n.args.circle}" here for this drum to play in` };
+  const r = stampInstrumentSet(ent.comp?.instrument, n.args);
+  if (!r.ok) {
+    w.debug("rejected", { who: c.id, verb: "instrument-set", why: r.why });
+    return { error: r.why };
+  }
+  return { args: r.args };
 }
 
 function vMount(ctx: VerbCtx, args: Record<string, unknown>) {
@@ -440,6 +498,8 @@ function vSpawn(ctx: VerbCtx, args: Record<string, unknown>) {
 const extras: Record<string, Pick<VerbRow, "selfRankZero" | "validate" | "after">> = {
   say: { validate: vSay },
   caption: { validate: vCaption },
+  "circle-set": { validate: vCircleSet },
+  "instrument-set": { validate: vInstrumentSet },
   spawn: { validate: vSpawn },
   // A `use` is a cause; reactions turn it into logged effects.
   use: { after: (ctx, entry) => reactToUse(ctx.w, entry) },

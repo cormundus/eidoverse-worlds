@@ -64,6 +64,11 @@ export const VERB_NEEDS: Record<string, { rank: number; gen?: boolean; caption?:
   // captions holds exactly this and its ordinary visitor verbs — never
   // builder standing over the world (Mica, #187 review).
   caption: { rank: 0, caption: true },
+  // The drum circle (shared/circle.js; a proposed protocol amendment): a
+  // circle's grid and a drum's synthesis are AUTHORED state, so builder rank,
+  // narrowed by guard (GUARD_AUTHORED). Playing is not a verb at all — it
+  // rides the presence plane — so these gate only the instruments themselves.
+  "circle-set": { rank: 1 }, "instrument-set": { rank: 1 },
   // Using the world is for everyone; only authoring it is gated.
   use: { rank: 0 },
   // mount/dismount are rank 1 for THINGS (loading cargo is building) but the
@@ -165,7 +170,11 @@ export function lockRefusal(state: WorldState, verb: string, args: Record<string
  *  author — the person whose rights the script already emits under.
  *  Matching is by id today (entities record the display id); the sub leg is
  *  there for the day the fold keys actors by durable principal. */
-export const GUARD_AUTHORED = new Set(["comp", "motion", "behavior", "place", "remove", "punt", "mount", "dismount", "spawn", "light"]);
+export const GUARD_AUTHORED = new Set(["comp", "motion", "behavior", "place", "remove", "punt", "mount", "dismount", "spawn", "light",
+  // the drum circle's two verbs edit authored state exactly as `comp` does — and,
+  // like `comp`, they stay OFF LOCK_GUARDED: the lock guards position and existence,
+  // so a locked drum can still be retuned (design rev 5, §2.1)
+  "circle-set", "instrument-set"]);
 
 /** Who placed a thing: the PRINCIPAL stamped at creation. `placer` is written
  *  by the server on every spawn/light (verbs.ts: the connection's display id

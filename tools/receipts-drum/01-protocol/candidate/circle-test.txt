@@ -1,0 +1,77 @@
+
+1. grid math (§3)
+  ✓ step = 166.67 ms
+  ✓ bar = 2,666.67 ms
+  ✓ 16 steps per bar
+  ✓ bar 3 step 5 sounds at T + 8,833.33
+  ✓ T + 10,000 falls in bar 3
+  ✓ before t0 the bar is NEGATIVE, never clamped
+
+2. the door: start (§2.1)
+  ✓ shape drops a client's t0, gen and initiator
+  ✓ countIn defaults to 1
+  ✓ start: t0 = acceptance + one bar = T + 2,666.67
+  ✓ start: gen 1 on a fresh entity
+  ✓ start: the server stamps the initiator
+  ✓ start on a running circle is refused
+  ✓ start wants bpm, meter and subdivision
+  ✓ bpm outside 40–240 is refused
+  ✓ countIn outside 1–4 is refused
+
+3. the door: change with lead time (§2.1, §3's worked example)
+  ✓ lead defaults to H = 16
+  ✓ the change lands at bar 3 + 16 + 1 = 20
+  ✓ new t0 = T + 20 × 2,666.67 = T + 53,333.33
+  ✓ gen 2 → 3
+  ✓ lead 15 (< H) is refused
+  ✓ a change must alter something
+  ✓ a non-initiator may not change it
+  ✓ before the circle has started (and no prior change), a change is refused
+  ✓ change or end with no running circle is refused
+
+4. the fold (§2.1, §2.5)
+  ✓ start folds
+  ✓ a start with a non-successor gen folds to nothing
+  ✓ change folds: bpm 120, gen 3, t0 T + 53,333.33
+  ✓ the FOLD derives prev from the folded grid: gen 2, bpm 90, until = the new t0
+  ✓ a change with the wrong gen folds to nothing
+  ✓ a change whose t0 is not after the folded t0 folds to nothing
+  ✓ pending grid's bar at the request is ⌊(10,000 − 53,333.33) ÷ 2,000⌋ = −22 (never clamped)
+  ✓ its bar 0 enters the horizon at T + 21,333.33 (current bar −16; −16 + 16 = 0)
+  ✓ a second change while one is pending is refused, naming bar 20
+  ✓ end keeps gen and marks ended
+  ✓ an end with the wrong gen folds to nothing
+  ✓ after end, a new start continues the generation: gen 4, never 1
+  ✓ a restart stamped gen 1 (a reset) folds to nothing
+  ✓ the restart folds with the new initiator and no stale prev
+
+5. instruments (§2.2)
+  ✓ shape drops a client's voiceGen
+  ✓ defaults: polyphony 8, volume 0.8, radius 15
+  ✓ an unknown synth is refused at the door
+  ✓ a stroke letter must be one uppercase letter
+  ✓ a stroke parameter out of range is refused
+  ✓ first edit: voiceGen 1
+  ✓ every edit bumps voiceGen: 1 → 2
+  ✓ a non-successor voiceGen folds to nothing
+  ✓ an unknown synth folds to nothing (fails closed)
+  ✓ end keeps voiceGen 2 and marks ended
+  ✓ after end, the next edit continues: voiceGen 3, never 1
+
+6. through the real shared fold (foldEntry)
+  ✓ circle-set folds into comp.circle
+  ✓ a plain comp of type circle folds to nothing
+  ✓ a plain comp of type instrument folds to nothing
+  ✓ PROTECTED_COMPS is exactly circle and instrument
+  ✓ a hand-edited non-successor circle-set folds to nothing
+  ✓ a circle-set on a missing entity folds to nothing
+
+7. policy is not protocol (Mica: changing L/F/H must not alter protocol identity)
+  ✓ the policy object is labelled PROVISIONAL_TEST_VALUE
+  ✓ …and frozen in one place
+  ✓ H = 24 moves the change to bar 3 + 24 + 1 = 28
+  ✓ …but the entry's SHAPE is identical (same keys)
+  ✓ …and both fold by the same rule (same bag keys; each t0 is its own stamp)
+  ✓ the fold reads neither the clock nor policy
+
+61 passed, 0 failed

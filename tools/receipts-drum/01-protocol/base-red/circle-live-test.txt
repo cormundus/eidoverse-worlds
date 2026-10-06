@@ -1,0 +1,70 @@
+[drum-scratch] owned world up: http://127.0.0.1:21480 pid=20692 nonce=0b04d59b-3779-4371-87e7-d1c75fe9a7b8 dir=$DRUM_SCRATCH_ROOT\2026-10-06T03-11-58-976Z-base-red-live-0b04d59b
+
+drum circle verbs, live — world "drumlive-jrp10a"
+
+1. start: the server stamps t0, gen and initiator
+39 |         return new Promise((res, rej) => {
+40 |           const hit = s.msgs.find(want); if (hit) return res(hit);
+41 |           const t0 = Date.now();
+42 |           const iv = setInterval(() => {
+43 |             const m = s.msgs.find(want);
+44 |             if (m) { clearInterval(iv); res(m); } else if (Date.now() - t0 > ms) { clearInterval(iv); rej(new Error(`no match in ${ms}ms`)); }
+                                                                                                                   ^
+error: no match in 4000ms
+      at <anonymous> ($BASE_WORKTREE\tools\circle-live-test.ts:44:111)
+
+Bun v1.3.14 (Windows x64)
+[drum-scratch] receipt {
+  "label": "base-red-live",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-11-58-976Z-base-red-live-0b04d59b\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-11-58-976Z-base-red-live-0b04d59b",
+  "port": 21480,
+  "origin": "http://127.0.0.1:21480",
+  "pid": 20692,
+  "nonce": "0b04d59b-3779-4371-87e7-d1c75fe9a7b8",
+  "startedAt": "2026-10-06T03:11:58.976Z",
+  "endedAt": "2026-10-06T03:12:05.092Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-06T03-11-58-976Z-base-red-live-0b04d59b\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

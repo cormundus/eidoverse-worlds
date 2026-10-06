@@ -230,7 +230,24 @@ const porch2 = eye4.msgs.find((m) => m.type === "snapshot").state.entities?.porc
 check("keep: false clears the exemption without touching the rest",
   !!porch2 && porch2.keep === undefined && porch2.intensity === 40, JSON.stringify(porch2));
 
-for (const s of [alice, bob, eye, eye2, eye3, eye4]) s.close();
+// ---- the drum circle's two verbs (a proposed amendment; full matrix in
+// tools/circle-live-test.ts, meaning in shared/circle.js) -------------------
+alice.verb("spawn", { id: "drum1", lib: "deco/drum.glb", pos: [5, 0, 5] });
+alice.verb("circle-set", { id: "drum1", op: "start", bpm: 90, meter: 4, subdivision: 4, gen: 7 });
+alice.verb("instrument-set", { id: "drum1", circle: "drum1", name: "low", synth: "drum-v1",
+  strokes: { B: { f0: 80, drop: 2, dropMs: 120, decayMs: 400, noise: 0.1, cutoff: 1200 } } });
+const drumErrs = alice.errors.length;
+alice.verb("comp", { id: "drum1", type: "circle", data: { bpm: 60 } });
+await alice.settle();
+check("comp cannot write a circle (circle-set is its one writer path)", alice.errors.length === drumErrs + 1, alice.errors.join("; "));
+const eye5 = await open({ id: "eye5", world: WORLD, spectate: true });
+const drum = eye5.msgs.find((m) => m.type === "snapshot").state.entities?.drum1?.comp;
+check("fold: circle-set folds the server's stamps (gen 1, not the client's 7)",
+  drum?.circle?.gen === 1 && drum?.circle?.bpm === 90 && drum?.circle?.initiator?.id === "alice", JSON.stringify(drum?.circle));
+check("fold: instrument-set folds with voiceGen 1", drum?.instrument?.voiceGen === 1 && drum?.instrument?.synth === "drum-v1",
+  JSON.stringify(drum?.instrument));
+
+for (const s of [alice, bob, eye, eye2, eye3, eye4, eye5]) s.close();
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed ? 1 : 0);

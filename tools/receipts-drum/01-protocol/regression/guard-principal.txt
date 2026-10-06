@@ -1,0 +1,28 @@
+
+guard principal — world "principal-4dc8wk"
+
+  ✓ the snapshot tells a vouched-for joiner its subject (yourSub)
+  ✓ 5. spawn folds a SERVER-stamped placer {id, sub}; the client's forged one is stripped
+  ✓ …and the guard went on (the stamp is what the guard matched)
+  ✓ 1. the same subject under a NEW display name still authors its guarded thing
+  ✓ 1. a stranger wearing the placer's OLD name is refused (nameplate, not deed)
+  ✓ 1. …and the renamed placer really wears a different display name
+  ✓ 3. a stranger may not load cargo onto a guarded carrier
+  ✓ 3. …but may sit on it (self-mount is use, not authorship)
+  ✓ 3. …and steps off again (self-dismount is use too)
+  ✓ 3. the placer loads cargo onto their own guarded carrier
+  ✓ 7. a stranger may not unload cargo from a guarded carrier (dismount is gated on the carrier's placer, like mount)
+  ✓ 7. …and the cargo still rides it
+  ✓ 7. the carrier's placer unloads it
+  ✓ 7. the world's owner overrides and unloads it
+  ✓ 4. a stranger's force at the guarded thing is accepted (force is a builder verb) and moves it not at all
+  ✓ 2. a script's creation carries its AUTHOR's principal, frozen at creation
+  ✓ 2. …removing the script changes nothing: a stranger is still refused
+  ✓ 2. …rebinding the same behavior id under a stranger transfers nothing
+  ✓ 2. …and the author (renamed, same subject) still authors it
+  ✓ 6. the owner brightening the guarded lamp keeps the first placer (re-light is a partial update, not re-authoring)
+  ✓ a self-asserted joiner's thing carries {id} only and is guarded by display id (the pre-Archipelago leg)
+  ✓ …and a stranger is refused on it too
+
+22 passed, 0 failed
+

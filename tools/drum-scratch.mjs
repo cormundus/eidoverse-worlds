@@ -88,7 +88,12 @@ export async function scratchWorld({ label = 'drum', library = null, env: extraE
     EIDO_BOOT_NONCE: nonce, WORLD_INSTANCE_NONCE: nonce, ...extraEnv,
   });
   const bun = process.execPath.includes('bun') ? process.execPath : (process.env.BUN_PATH || 'bun');
-  const child = spawn(bun, ['server/server.ts'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  // A mutation run (tools/drum-mutants.mjs): the SERVER loads the mutant in
+  // memory through the preload; nothing on disk changes.
+  const mutant = process.env.DRUM_MUTANT;
+  if (mutant) env.DRUM_MUTANT = mutant;
+  const serverArgs = mutant ? ['--preload', join(ROOT, 'tools', 'drum-mutant-preload.mjs'), 'server/server.ts'] : ['server/server.ts'];
+  const child = spawn(bun, serverArgs, { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   const logChunks = [];
   child.stdout.on('data', (b) => logChunks.push(b)); child.stderr.on('data', (b) => logChunks.push(b));
   let exit = null;
@@ -102,7 +107,7 @@ export async function scratchWorld({ label = 'drum', library = null, env: extraE
     if (!exit) { try { child.kill('SIGKILL'); } catch { /* gone */ } await exited; }
     const closed = await portClosed(port);
     const receipt = {
-      label, world: env.WORLDS_DIR, scratchDir: dir, port, origin, pid: child.pid, nonce,
+      label, world: env.WORLDS_DIR, scratchDir: dir, port, origin, pid: child.pid, nonce, mutant: mutant ?? null,
       startedAt, endedAt: new Date().toISOString(), identity,
       childExited: exit !== null, exit, portClosed: closed === true, portProbe: closed,
       scratchWorld: 'preserved as a test artifact (never deleted by this harness)',
@@ -127,7 +132,11 @@ if (import.meta.main) {
   const opts = argv.slice(0, sep < 0 ? argv.length : sep), cmd = sep < 0 ? [] : argv.slice(sep + 1);
   const label = opts.includes('--label') ? opts[opts.indexOf('--label') + 1] : 'drum';
   const library = opts.includes('--library') ? opts[opts.indexOf('--library') + 1] : null;
-  const w = await scratchWorld({ label, library });
+  // --env K=V (repeatable): a server knob a test's recipe asks for
+  // (behaviortest: BHV_TIMER_MIN=1; compfold-test: FOLD_EVERY=1)
+  const env = {};
+  opts.forEach((o, i) => { if (o === '--env') { const [k, ...v] = String(opts[i + 1] ?? '').split('='); if (k) env[k] = v.join('='); } });
+  const w = await scratchWorld({ label, library, env });
   console.log(`[drum-scratch] owned world up: ${w.origin} pid=${w.pid} nonce=${w.nonce} dir=${w.dir.split(SCRATCH_ROOT).join('$DRUM_SCRATCH_ROOT')}`);
   let code = 0;
   if (cmd.length) {

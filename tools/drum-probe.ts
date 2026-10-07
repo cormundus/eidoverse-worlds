@@ -156,6 +156,24 @@ try {
   check("once synced, a skewed machine's serverNow agrees with the server's clock within 50 ms (unsynced is reported, not hidden)",
     !kb.synced || Math.abs(kb.err) < 50, JSON.stringify(kb));
 
+  console.log("\n4b. the pad: it opens at the drum your BODY stands at, and holds still (found by Adam in the A1 demo)");
+  // Walk the body (teleport the controller), never the camera: the third-person camera rides metres
+  // behind and above, and measuring from it never opened the pad (live: body 1.22 m, camera 5.93 m).
+  const padState = () => D(adam, `({ shown: document.getElementById('ew-drum-pad')?.style.display === 'block',
+    h: document.getElementById('ew-drum-pad')?.offsetHeight ?? 0,
+    buttons: [...document.querySelectorAll('#ew-drum-pad button')].map((b) => b.dataset.stroke).join('') })`);
+  const walkTo = (x: number, z: number) => D(adam, `(() => { const s = EW.myState; s.pos.set(${x}, s.pos.y, ${z}); })()`);
+  await walkTo(40, 40); await sleep(1500);
+  const far = await padState();
+  await walkTo(7, -1); await sleep(1500);   // 1 m from hand3 (x 7, z -2)
+  const near = await padState();
+  check("standing far from every drum, no pad", !far.shown, JSON.stringify(far));
+  check("standing 1 m from a drum (the camera well behind), the pad opens with the drum's strokes", near.shown && near.buttons === "BTS", JSON.stringify(near));
+  for (const s of ["B", "T", "S", "B"]) { await D(adam, `EW.drums.press('hand3', '${s}')`); await sleep(150); }
+  await sleep(1200);   // receipts in, the pad re-rendered with new text
+  const padAfter = await padState();
+  check("the pad keeps its height as hits and text come in, so the buttons stay under the hand", near.h > 0 && padAfter.h === near.h, `${near.h} → ${padAfter.h} px`);
+
   console.log("\n5. teardown (A8)");
   await verb(adam, "circle-set", { id: "drums", op: "end" });
   await verb(adam, "remove", { id: "fasthand" });

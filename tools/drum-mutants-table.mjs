@@ -136,6 +136,13 @@ export const MUTANTS = [
   { id: 'clear-leaks', seam: 'clearInstruments leaves nothing behind (rule 7, A8)',
     file: 'client/lib/instruments.js', find: 'for (const id of [...new Set([...voices.keys(), ...panners.keys()])]) dropVoice(id);', replace: '',
     tests: ['probe'], expectRed: ['a full clear (clearInstruments)'] },
+  { id: 'pad-from-camera', seam: 'the pad opens at the drum the BODY stands at, not the camera (Adam, A1 demo)',
+    file: 'client/main.js', find: 'tickPad(getMe() ? myState.pos : null)', replace: 'tickPad(null)',
+    tests: ['probe'], expectRed: ['standing 1 m from a drum (the camera well behind), the pad opens'] },
+  { id: 'pad-grows', seam: 'the pad never changes size, so the buttons stay under the hand (Adam, A1 demo)',
+    file: 'client/lib/instruments.js', find: 'd.style.cssText = `height:${(lines * 1.35).toFixed(2)}em;overflow:hidden;margin-bottom:6px`;',
+    replace: 'd.style.cssText = `margin-bottom:6px`;',
+    tests: ['probe'], expectRed: ['the pad keeps its height'] },
   // ---- commit 6, the text tier: 'mcpl' = tools/drum-mcpl-test.ts, the REAL WorldAgent and the
   // REAL play tool handler in the test process (the preload mutates them there)
   { id: 'line-per-phrase', seam: 'one eidoverse:circle line per circle per quiet window, never per phrase (§5, A9)',

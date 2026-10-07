@@ -447,6 +447,8 @@ export function noteStruck(win, ph, { steps, keepBars = STRUCK_BOUNDS.KEEP_BARS,
     for (const id of ids.slice(0, ids.length - STRUCK_BOUNDS.KEEP_VOICES)) delete win.voices[id];
   }
 }
+/** A duration in plain words: "40 s", "23 min", "2 h". */
+const agoWords = (ms) => (ms < 60_000 ? `${Math.round(ms / 1000)} s` : ms < 3_600_000 ? `${Math.round(ms / 60_000)} min` : `${Math.round(ms / 3_600_000)} h`);
 /** "a, b, c +2": at most SHOW_AUTHORS names, the rest counted. */
 export function namesCapped(names, max = STRUCK_BOUNDS.SHOW_AUTHORS) {
   if (!names.length) return '—';
@@ -473,15 +475,26 @@ export function describeCircle(c, instruments, win, { now, initiatorPresent = tr
   }
   const vs = Object.entries(win?.voices ?? {});
   if (!vs.length) { lines.push(`  nothing struck or queued since you arrived`); return lines.join('\n'); }
-  const span = vs.flatMap(([, v]) => Object.values(v.bars).map((b) => b.bar));
-  lines.push(`  struck/queued, bars ${Math.min(...span)}–${Math.max(...span)} (observed since you arrived):`);
+  lines.push(`  struck/queued (observed since you arrived):`);
   // the most recently struck drums first; at most SHOW_VOICES of them, the rest counted
   const shown = vs.sort(([, a], [, b]) => lastStruck(b) - lastStruck(a)).slice(0, STRUCK_BOUNDS.SHOW_VOICES);
   for (const [voice, v] of shown) {
     const name = instruments?.[voice]?.name ?? voice;
     const bars = Object.values(v.bars).sort((a, b) => (a.gen - b.gen) || (a.bar - b.bar));
     const who = namesCapped([...new Set(bars.flatMap((b) => b.authors ?? []))]);
-    lines.push(`    ${name} (${who}): ${bars.map((b) => b.cells + (b.queued ? '*' : '')).join('  ')}`);
+    // Each drum carries its OWN bars, and a drum gone quiet says for how long, on its own grid.
+    // One span over every drum ("bars 42–564") was true and misleading: in the A1 demo it showed a
+    // hand drum's last bars, struck ~20 minutes earlier, beside the low drum's current ones.
+    const first = bars[0], last = bars[bars.length - 1];
+    const range = first.bar === last.bar ? `bar ${last.bar}` : `bars ${first.bar}–${last.bar}`;
+    let quiet = '';
+    if (now !== undefined) {
+      const g = gridForGen(c, last.gen);
+      const endedAt = g ? barStart(g, last.bar + 1) : null;
+      if (endedAt === null) quiet = ', from an earlier tempo';
+      else if (now >= endedAt + gridOf(g).barMs) quiet = `, quiet for ${Math.floor((now - endedAt) / gridOf(g).barMs)} bars (${agoWords(now - endedAt)})`;
+    }
+    lines.push(`    ${name} (${who}), ${range}${quiet}: ${bars.map((b) => b.cells + (b.queued ? '*' : '')).join('  ')}`);
   }
   if (vs.length > shown.length) lines.push(`    …and ${vs.length - shown.length} more drum${vs.length - shown.length > 1 ? 's' : ''} struck, not shown`);
   if (shown.some(([, v]) => Object.values(v.bars).some((b) => b.queued))) lines.push(`  (* = yours, queued)`);

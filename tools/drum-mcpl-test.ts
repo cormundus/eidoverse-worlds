@@ -110,10 +110,10 @@ console.log("\n3. perception: what was struck, never what was heard");
 await until(() => /B\.T\./.test(listener.look()), 2000);
 const lookL = listener.look();
 check("the listener's look shows the resident's pattern strings over the observed bars",
-  /hand \(resident\): B\.T\. {2}S\.S\./.test(lookL) && /struck\/queued, bars \d+–\d+ \(observed since you arrived\)/.test(lookL), lookL.split("\n").filter((l) => /hand|struck/.test(l)).join(" / "));
+  /hand \(resident\), bars \d+–\d+: B\.T\. {2}S\.S\./.test(lookL) && /struck\/queued \(observed since you arrived\)/.test(lookL), lookL.split("\n").filter((l) => /hand|struck/.test(l)).join(" / "));
 check("…and never claims anything was heard", !/\bheard?\b/i.test(lookL.split("\n").filter((l) => /drum|struck|hand|low/.test(l)).join("\n")));
 const lookR = resident.look();
-check("the resident sees its own passage as queued (*)", /hand \(resident\): B\.T\.\* {2}S\.S\.\*/.test(lookR) && /\(\* = yours, queued\)/.test(lookR),
+check("the resident sees its own passage as queued (*)", /hand \(resident\), bars \d+–\d+: B\.T\.\* {2}S\.S\.\*/.test(lookR) && /\(\* = yours, queued\)/.test(lookR),
   lookR.split("\n").filter((l) => /hand \(|yours/.test(l)).join(" / "));
 
 console.log("\n4. the eidoverse:circle line: one per circle per quiet window");

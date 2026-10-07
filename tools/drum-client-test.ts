@@ -54,7 +54,14 @@ check("a live hit fills its one cell: bar 3 = '..............T.'", v.bars["2:3"]
 check("a planned passage fills its bars, marked as mine/queued", v.bars["2:4"].cells === "B...T.S.B...T.S." && v.bars["2:5"].queued === true);
 const text = describeCircle(RUN, { hand: { name: "hand" } }, win, { now: T + 10_050 });
 check("the description names tempo, meter and generation", /90 BPM, 4\/4 in sixteenths \(gen 2\)/.test(text), text);
-check("…says 'struck/queued' over the OBSERVED bars, 3–5", /struck\/queued, bars 3–5 \(observed since you arrived\)/.test(text), text);
+check("…says 'struck/queued' since you arrived, each drum with its OWN bars, 3–5", /struck\/queued \(observed since you arrived\):/.test(text) && /hand \(bea, adam\), bars 3–5: /.test(text), text);
+// staleness (found in the A1 demo: a hand drum's bars from ~20 min earlier read as current).
+// Bars 3–5 end where bar 6 begins: T + 6 × 2,666.67 = T + 16,000.
+const ended = T + 16_000, BAR90 = 2666.6667;
+check("a drum still sounding (or queued) carries no 'quiet' note", !/quiet for/.test(describeCircle(RUN, { hand: { name: "hand" } }, win, { now: ended + BAR90 / 2 })));
+check("ten bars after its last one ended, a drum says so: 'quiet for 10 bars (27 s)'",
+  /hand \(bea, adam\), bars 3–5, quiet for 10 bars \(27 s\): /.test(describeCircle(RUN, { hand: { name: "hand" } }, win, { now: ended + 10 * BAR90 + 1 })),
+  describeCircle(RUN, { hand: { name: "hand" } }, win, { now: ended + 10 * BAR90 + 1 }).split("\n").filter((l) => /hand/.test(l)).join(""));
 check("…and never says anyone heard anything", !/heard|hear\b/.test(text));
 check("an empty window says nothing was struck since you arrived (no implied history)",
   /nothing struck or queued since you arrived/.test(describeCircle(RUN, {}, newStruckWindow(), { now: T + 10_050 })));
@@ -68,7 +75,7 @@ const aged = newStruckWindow();
 for (let b = 1; b <= 5; b++) noteStruck(aged, { voice: "hand", author: `a${b}`, gen: 2, bar: b, bars: 1, pattern: "B...............", }, { steps: 16 });
 const agedText = describeCircle(RUN, { hand: { name: "hand" } }, aged, { now: T + 10_050 });
 check("names age out WITH their bars: bar 1 fell out, so a1 is gone; four names read as three and a count",
-  /hand \(a2, a3, a4 \+1\):/.test(agedText), agedText.split("\n").filter((l) => /hand \(/.test(l)).join(""));
+  /hand \(a2, a3, a4 \+1\), bars 2–5/.test(agedText), agedText.split("\n").filter((l) => /hand \(/.test(l)).join(""));
 const many = newStruckWindow();
 for (let d = 0; d < 20; d++) noteStruck(many, { voice: `d${d}`, author: "x", gen: 2, bar: d + 1, bars: 1, pattern: "B...............", }, { steps: 16 });
 check("the window keeps at most 16 drums, dropping the least recently struck", Object.keys(many.voices).length === 16 && !("d0" in many.voices) && ("d19" in many.voices),

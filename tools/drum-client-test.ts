@@ -80,8 +80,9 @@ check("…and describes at most 8 of them, newest first, counting the rest in wo
 console.log("\n5. the reference kit (§6)");
 check("both drums are valid instrument-set bags", normalizeInstrumentSetArgs({ id: "h", circle: "c", ...HAND_DRUM }).ok && normalizeInstrumentSetArgs({ id: "l", circle: "c", ...LOW_DRUM }).ok);
 check("hand = B/T/S, low = B/M", Object.keys(HAND_DRUM.strokes).join("") === "BTS" && Object.keys(LOW_DRUM.strokes).join("") === "BM");
-check("noise stays dark by default (every cutoff ≤ 4 kHz)", [...Object.values(HAND_DRUM.strokes), ...Object.values(LOW_DRUM.strokes)].every((s: any) => s.cutoff <= 4000));
-check("…and the kit says plainly it is PROVISIONAL, not yet tuned by ear", /PROVISIONAL/.test(KIT_STATUS));
+check("the kit is v2 as tuned by ear: the noise filters opened (the v1 ≤ 4 kHz kit read as muffled), the slap brightest",
+  HAND_DRUM.strokes.S.cutoff === 11000 && LOW_DRUM.strokes.B.cutoff === 2800 && HAND_DRUM.strokes.S.cutoff > HAND_DRUM.strokes.T.cutoff);
+check("…and the kit says plainly how it was tuned", /TUNED BY EAR — v2, the A1 demo/.test(KIT_STATUS));
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

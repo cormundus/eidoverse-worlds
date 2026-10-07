@@ -29,8 +29,11 @@ function open(id: string): Promise<{ verb(v: string, a: any): void; close(): voi
   });
 }
 
-// the kit (PROVISIONAL, not yet tuned by ear — this demo is where it gets tuned)
-const { HAND_DRUM, LOW_DRUM } = await import("../shared/drumkit.js");
+// the reference kit (tuned by ear here, v2, 2026-10-06), or a kit under test
+// DEMO_KIT=<kit.json> ({hand: bag, low: bag}) plays a kit under test instead of the reference one
+const ref = await import("../shared/drumkit.js");
+const kit = process.env.DEMO_KIT ? JSON.parse(await Bun.file(process.env.DEMO_KIT).text()) : null;
+const HAND_DRUM = kit?.hand ?? ref.HAND_DRUM, LOW_DRUM = kit?.low ?? ref.LOW_DRUM;
 const keeper = await open("keeper");
 for (const [id, pos] of [["drums", [0, 0, -3]], ["hand", [-1.2, 0, -2.4]], ["low", [1.2, 0, -2.4]]] as const)
   keeper.verb("spawn", { id, lib: "eidoverse/assets/models/crate_large_red.glb", pos });

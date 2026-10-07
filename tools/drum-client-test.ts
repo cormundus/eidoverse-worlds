@@ -63,6 +63,20 @@ check("a scheduled change is announced in time", /tempo → 120 BPM at bar 20 \(
 check("no invented inheritance: an absent initiator is said plainly (carry note 7)",
   /the initiator has left; only the owner or an operator can change or end this circle/.test(describeCircle(RUN, {}, null, { now: T + 10_050, initiatorPresent: false })));
 
+console.log("\n4b. bounded, so a busy circle can't flood a reader (Adam, 10-06)");
+const aged = newStruckWindow();
+for (let b = 1; b <= 5; b++) noteStruck(aged, { voice: "hand", author: `a${b}`, gen: 2, bar: b, bars: 1, pattern: "B...............", }, { steps: 16 });
+const agedText = describeCircle(RUN, { hand: { name: "hand" } }, aged, { now: T + 10_050 });
+check("names age out WITH their bars: bar 1 fell out, so a1 is gone; four names read as three and a count",
+  /hand \(a2, a3, a4 \+1\):/.test(agedText), agedText.split("\n").filter((l) => /hand \(/.test(l)).join(""));
+const many = newStruckWindow();
+for (let d = 0; d < 20; d++) noteStruck(many, { voice: `d${d}`, author: "x", gen: 2, bar: d + 1, bars: 1, pattern: "B...............", }, { steps: 16 });
+check("the window keeps at most 16 drums, dropping the least recently struck", Object.keys(many.voices).length === 16 && !("d0" in many.voices) && ("d19" in many.voices),
+  Object.keys(many.voices).join(","));
+const manyText = describeCircle(RUN, {}, many, { now: T + 10_050 });
+check("…and describes at most 8 of them, newest first, counting the rest in words",
+  (manyText.match(/^ {4}d\d+ \(/gm) ?? []).length === 8 && /^ {4}d19 \(/m.test(manyText) && /…and 8 more drums struck, not shown/.test(manyText), manyText);
+
 console.log("\n5. the reference kit (§6)");
 check("both drums are valid instrument-set bags", normalizeInstrumentSetArgs({ id: "h", circle: "c", ...HAND_DRUM }).ok && normalizeInstrumentSetArgs({ id: "l", circle: "c", ...LOW_DRUM }).ok);
 check("hand = B/T/S, low = B/M", Object.keys(HAND_DRUM.strokes).join("") === "BTS" && Object.keys(LOW_DRUM.strokes).join("") === "BM");

@@ -63,7 +63,7 @@ console.log(`\nthe drum circle for residents — world "${W}"\n`);
 
 const alice = await open({ id: "alice", world: W });
 await sleep(300);
-for (const [id, pos] of [["drums", [0, 0, 0]], ["hand", [1, 0, 0]], ["low", [-1, 0, 0]], ["faraway", [150, 0, 150]], ["farhand", [151, 0, 150]], ["drum3", [2, 0, 2]]] as const)
+for (const [id, pos] of [["drums", [0, 0, 0]], ["hand", [1, 0, 0]], ["low", [-1, 0, 0]], ["faraway", [150, 0, 150]], ["farhand", [151, 0, 150]], ["drum3", [2, 0, 2]], ["hand3", [2, 0, 3]]] as const)
   alice.verb("spawn", { id, lib: "deco/drum.glb", pos });
 await sleep(300);
 
@@ -92,7 +92,7 @@ check("the circle is described: tempo, meter, gen, initiator", /\[drums\] a drum
 check("…with the count-in announced", /count-in by alice, bars 0–0; open from bar 1/.test(look0));
 check("…and nothing claimed as struck before anyone played", /nothing struck or queued since you arrived/.test(look0));
 check("a drum names its stroke letters", /drum "hand" in circle drums, strokes B T S/.test(look0));
-check("the play hint gives the sounding grid's bar length", /one bar = 4 cells/.test(look0) && /Drums: hand, low/.test(look0));
+check("the play hint gives the sounding grid's bar length", /one bar = 4 cells/.test(look0) && /Drums in earshot: hand, low/.test(look0));
 check("no circle/instrument bag leaks as a raw 'components:' line", !/components: .*(circle|instrument)/.test(look0));
 
 console.log("\n2. the play tool: the receipt is the only feedback");
@@ -169,7 +169,8 @@ check("playing an ended circle is refused locally", /^refused: the circle "drums
 console.log("\n8. the initiator leaves (no invented inheritance)");
 const bob = await open({ id: "bob", world: W });
 bob.verb("circle-set", { id: "drum3", op: "start", ...FAST, countIn: 1 });
-await until(() => !!listener.entities.get("drum3")?.comp?.circle, 2000);
+bob.verb("instrument-set", { id: "hand3", circle: "drum3", ...HAND });   // a circle is read through a drum in earshot
+await until(() => !!listener.entities.get("drum3")?.comp?.circle && !!listener.entities.get("hand3")?.comp?.instrument, 2000);
 await until(() => listener.people.has("bob"), 2000);
 const withBob = listener.look();
 bob.close();
@@ -196,7 +197,76 @@ const ghostLines = lines3() - n3 - ownLines;
 check("a phrase under the listener's own name opens no line (the guard behind the server's sender exclusion)", ownLines === 0, `${ownLines}`);
 check("…while the same phrase under another name does (the control)", ghostLines === 1, `${ghostLines}`);
 
-console.log("\n9. no retention, at both ends (A9)");
+console.log("\n9. a flood: four wide circles in earshot, one with nine drums, five players on one drum");
+// The widest legal grid (12 beats × 32nds = 96 cells a bar), every drum played,
+// and one drum played by five people on the same bar. Unbounded, this would be
+// tens of KB in one look(); bounded, look() names what it cut.
+const WIDE = { bpm: 240, meter: 12, subdivision: 8 };   // a bar = 3 s
+const fl = ["f1", "f2", "f3", "f4"];
+const drumsOf = (f: string) => (f === "f1" ? 9 : 1);   // f1 tests the drum cap; four circles test the circle cap
+// the server allows 12 verbs per 4 s per client (server/verbs.ts VERB_RATE): pace at ~3/s
+const errs0 = alice.errors.length;
+const paced = async (v: string, a: any) => { alice.verb(v, a); await sleep(340); };
+for (const [i, f] of fl.entries()) {
+  // f1 nearest the listener (so its nine drums are among the 3 circles shown), the rest farther, all within 15 m
+  const [bx, bz] = [[0, 4], [-8, 6], [8, 6], [0, 12]][i];
+  await paced("spawn", { id: f, lib: "deco/drum.glb", pos: [bx, 0, bz - 1] });
+  for (let d = 0; d < drumsOf(f); d++) await paced("spawn", { id: `${f}d${d}`, lib: "deco/drum.glb", pos: [bx + (d % 3) * 0.8, 0, bz + Math.floor(d / 3) * 0.8] });
+}
+await paced("spawn", { id: "f1far", lib: "deco/drum.glb", pos: [0, 0, 45] });   // f1's drum beyond earshot
+for (const f of fl) {
+  await paced("circle-set", { id: f, op: "start", ...WIDE, countIn: 1 });
+  for (let d = 0; d < drumsOf(f); d++) await paced("instrument-set", { id: `${f}d${d}`, circle: f, ...LOW });
+}
+await paced("instrument-set", { id: "f1far", circle: "f1", ...LOW });
+await until(() => fl.every((f) => !!listener.entities.get(`${f}d${drumsOf(f) - 1}`)?.comp?.instrument) && !!listener.entities.get("f1far")?.comp?.instrument, 5000);
+check("the flood's setup drew no refusals (paced under the verb budget)", alice.errors.length === errs0, alice.errors.slice(errs0).join("; "));
+const beganBefore = heard.filter((e) => e.kind === "circle" && /began/.test(e.text ?? "")).length;
+const WIDE_BAR = "B".padEnd(12, ".").repeat(8);   // 96 cells
+let n9 = 100;
+for (const f of fl) for (let d = 0; d < drumsOf(f); d++) {   // alice is the initiator: her "next" may land in the count-in
+  alice.send({ type: "phrase", circle: f, gen: 1, voice: `${f}d${d}`, voiceGen: 1, bar: "next", pattern: WIDE_BAR, n: n9++ });
+  await sleep(80);   // under the 16/s phrase budget
+}
+alice.send({ type: "phrase", circle: "f1", gen: 1, voice: "f1far", voiceGen: 1, bar: "next", pattern: WIDE_BAR, n: n9++ });
+const players = await Promise.all(["p1", "p2", "p3", "p4", "p5"].map((id) => open({ id, world: W })));
+const fc = listener.entities.get("f1")!.comp!.circle;
+await until(() => Date.now() > fc.t0 + 3000 + 100, 9000);   // past f1's count-in
+const fiveBar = Math.floor((Date.now() - fc.t0) / 3000) + 2;
+for (const [i, p] of players.entries()) p.send({ type: "phrase", circle: "f1", gen: 1, voice: "f1d0", voiceGen: 1, bar: fiveBar, pattern: WIDE_BAR, n: 1 + i });
+const fiveR = await Promise.all(players.map((p) => p.next((m) => m.type === "phrase-receipt")));
+await sleep(600);
+const lookF = listener.look();
+const drumPart = lookF.slice(lookF.indexOf("\n[", lookF.indexOf("ground height")));
+const blocks = (drumPart.match(/\n\[[^\]]+\] a drum circle,/g) ?? []).length;
+check("five players on the same bar of one drum were all accepted (slots are per author)", fiveR.every((r) => r.ok), JSON.stringify(fiveR.map((r) => r.ok ?? r.why)));
+check(`at most ${3} circles are described, nearest first, and the rest are counted in words`,
+  blocks === 3 && /…and \d+ more drum circle\(s\) in earshot, not shown \(the nearest 3 are\)/.test(drumPart), `${blocks} blocks`);
+check("a circle of nine played drums shows eight and counts the ninth", /…and 1 more drum struck, not shown/.test(drumPart), drumPart.split("\n").filter((l) => /more|f1d|f2d/.test(l)).slice(0, 4).join(" / "));
+check("five names on one drum read as three and a count", /\(p\d, p\d, p\d \+\d\)|\(alice, p\d, p\d \+\d\)|\([a-z0-9]+, [a-z0-9]+, [a-z0-9]+ \+\d\)/.test(drumPart), drumPart.split("\n").filter((l) => /\+\d\)/.test(l)).join(" / ") || "no capped line");
+// the circle BLOCKS only: the entity list names every placed thing, f1far included (a building, not a jam)
+const circleBlocks = drumPart.split(/\n(?=\[)/).filter((b) => /^\[[^\]]+\] a drum circle,/.test(b)).join("\n");
+check("a drum of a near circle that stands beyond its own radius is not read (earshot)", circleBlocks.length > 0 && !/f1far/.test(circleBlocks),
+  circleBlocks.split("\n").filter((l) => /f1far/.test(l)).join(" / ") || "(no blocks)");
+const BYTES_MAX = 16_000;
+check(`the drum part of look() stays under ${BYTES_MAX} bytes under the flood (${drumPart.length} B)`, drumPart.length < BYTES_MAX);
+const beganF = heard.filter((e) => e.kind === "circle" && /began/.test(e.text ?? "")).slice(beganBefore);
+check("the flood produced ONE 'began' line per circle in earshot — never one per drum or phrase", beganF.length === 4 && fl.every((f) => beganF.some((e) => (e.text ?? "").includes(`[${f}]`))),
+  JSON.stringify(beganF.map((e) => e.text)));
+check("…and each names at most three players", beganF.every((e) => !/(, [^,()]+){3,}/.test((e.text ?? "").split(":").slice(1).join(":"))));
+check("exactly the circles with a drum in earshot are counted: drum3 and f1–f4 (5), so 2 are cut — the circle 212 m away is not among them",
+  /…and 2 more drum circle\(s\) in earshot/.test(drumPart), drumPart.split("\n").filter((l) => /more drum circle/.test(l)).join(""));
+// Walking away: the window still holds what this body heard, but look() reads only what it could hear NOW.
+const home = { ...listener.pos };
+listener.pos.x = 100; listener.pos.z = 100;
+const lookAway = listener.look();
+listener.pos.x = home.x; listener.pos.z = home.z;
+check("having walked out of earshot, look() describes no circle (what was heard stays in the window, unread)",
+  !/\n\[[^\]]+\] a drum circle,/.test(lookAway) && /a drum circle \(none of its drums in earshot\)/.test(lookAway),
+  lookAway.split("\n").filter((l) => /drum circle/.test(l)).slice(0, 3).join(" / "));
+for (const p of players) p.close();
+
+console.log("\n10. no retention, at both ends (A9)");
 const patterns = ["B.T.", "S.S.", "B.B."];
 // about PLAYING — a digest that alice placed a drum.glb is about building, not a jam
 const circleish = heard.filter((e) => /drum circle|phrase|playing|played|struck|pattern/i.test(e.text ?? ""));

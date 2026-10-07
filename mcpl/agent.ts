@@ -54,7 +54,7 @@ import { describePicture } from "../shared/picture.js";
 import { describeCaptions } from "../shared/captions.js";
 import { describeSound } from "../shared/sound.js";
 import { DRUM_POLICY, gridOf, gridForGen, barStart, stepTime, newStruckWindow, noteStruck, describeCircle,
-  circleLifecycleLine } from "../shared/circle.js";
+  circleLifecycleLine, STRUCK_BOUNDS, RADIUS_DEFAULT } from "../shared/circle.js";
 import { describeStructure, describeHere, localizePoint, planStructure, routeLocal } from "../shared/structure.js";
 import { effectiveWorldTransform, type Effective } from "./effective.ts";
 import { makeVerdictCache, seatGateCore, nameFromAvatarPath } from "../client/lib/seatcore.js";
@@ -1520,6 +1520,9 @@ export class WorldAgent {
    *  and a jam is not to be retained by accident. */
   private notePhrase(ph: any) {
     if (typeof ph?.circle !== "string" || typeof ph.voice !== "string") return;
+    // Earshot: a body reads what it could HEAR. A drum farther away than its own
+    // sound radius never enters the window and never opens a line (Adam, 10-06).
+    if (!this.inEarshot(ph.voice)) return;
     const c = this.entities.get(ph.circle)?.comp?.circle;
     const g = c && !c.ended ? gridForGen(c, ph.gen) : null;
     if (!g) return;                                  // stale on arrival: nothing to note
@@ -1534,9 +1537,41 @@ export class WorldAgent {
    *  phrase only pushes the quiet deadline out past its own last step; the
    *  circle going unstruck for circleQuietMs, ending, or being removed speaks
    *  once more. Silent for this body's own playing (the self-echo rule). */
+  /** Within this drum's sound radius (its `radius`, the browser panner's
+   *  maxDistance), on the ground plane, from where this body stands. */
+  private earshotDistance(drumId: string): number {
+    const d = this.entities.get(drumId);
+    const pos = d?.pos;
+    if (!pos) return Infinity;
+    return Math.hypot(pos[0] - this.pos.x, pos[2] - this.pos.z);
+  }
+  private inEarshot(drumId: string): boolean {
+    const r = this.entities.get(drumId)?.comp?.instrument?.radius ?? RADIUS_DEFAULT;
+    return this.earshotDistance(drumId) <= r;
+  }
+
+  /** A circle's drums that this body could hear: id → instrument bag (null if none). */
+  private circleDrumsInEarshot(circleId: string): Record<string, any> | null {
+    const drums: Record<string, any> = {};
+    for (const d of this.entities.values()) {
+      const ib = d.comp?.instrument;
+      if (ib && !ib.ended && ib.circle === circleId && this.inEarshot(d.id)) drums[d.id] = ib;
+    }
+    return Object.keys(drums).length ? drums : null;
+  }
+  /** Running circles with a drum in earshot, nearest drum first. */
+  private circlesInEarshot(): { id: string; cb: any; drums: Record<string, any>; dist: number }[] {
+    const out: { id: string; cb: any; drums: Record<string, any>; dist: number }[] = [];
+    for (const e of this.entities.values()) {
+      const cb = e.comp?.circle;
+      if (!cb || cb.ended) continue;
+      const drums = this.circleDrumsInEarshot(e.id);
+      if (drums) out.push({ id: e.id, cb, drums, dist: Math.min(...Object.keys(drums).map((d) => this.earshotDistance(d))) });
+    }
+    return out.sort((a, b) => a.dist - b.dist);
+  }
+
   private noteCirclePlayed(id: string, author: string, g: any, ph: any) {
-    const pos = this.entities.get(id)?.pos;
-    if (pos && Math.hypot(pos[0] - this.pos.x, pos[2] - this.pos.z) > this.activityRadiusM) return;
     const end = ph.live ? stepTime(g, ph.bar, ph.step) : barStart(g, ph.bar + (ph.bars ?? 1));
     let slot = this.circlePlaying.get(id);
     if (!slot) {
@@ -3315,7 +3350,7 @@ export class WorldAgent {
       // A drum circle and its drums (§5): the circle's grid and what was
       // struck are in their own block below; a drum names its strokes, which
       // are the letters a `play` pattern may use.
-      if (c.circle) aff.push(c.circle.ended ? `a drum circle (ended)` : `a drum circle (see below)`);
+      if (c.circle) aff.push(c.circle.ended ? `a drum circle (ended)` : this.circleDrumsInEarshot(e.id) ? `a drum circle (see below)` : `a drum circle (none of its drums in earshot)`);
       if (c.instrument && !c.instrument.ended) {
         aff.push(`drum "${c.instrument.name}" in circle ${c.instrument.circle}, strokes ${Object.keys(c.instrument.strokes ?? {}).join(" ")}`
           + `${c.instrument.look ? ` — ${c.instrument.look}` : ""}`);
@@ -3368,21 +3403,23 @@ export class WorldAgent {
     // what was struck or queued as pattern strings over the bars this body
     // observed — the same describeCircle every client renders. Never "heard";
     // never a history from before this body arrived.
-    for (const e of this.entities.values()) {
-      const cb = e.comp?.circle;
-      if (!cb || cb.ended) continue;
-      const drums: Record<string, any> = {};
-      for (const d of this.entities.values()) {
-        const ib = d.comp?.instrument;
-        if (ib && !ib.ended && ib.circle === e.id) drums[d.id] = ib;
-      }
+    // Bounded (Adam, 10-06: flooding is the primary concern): only circles with
+    // a drum in EARSHOT, nearest first, at most SHOW_CIRCLES of them; only the
+    // drums in earshot; and the window's own caps on drums and names. What is
+    // cut is counted in words.
+    const audible = this.circlesInEarshot();
+    for (const { id, cb, drums } of audible.slice(0, STRUCK_BOUNDS.SHOW_CIRCLES)) {
+      const win = this.struck.get(id);
+      const heard = win && { ...win, voices: Object.fromEntries(Object.entries(win.voices).filter(([v]) => v in drums)) };
       const init = cb.initiator?.id;
       const initiatorPresent = !init || init === this.name || this.people.has(init);
-      L.push(`\n[${e.id}] ${describeCircle(cb, drums, this.struck.get(e.id), { now: nowMs, initiatorPresent })}`);
-      if (Object.keys(drums).length) {
-        const g = gridOf(gridForGen(cb, this.soundingGen(cb, nowMs)));   // the grid `play` writes for
-        L.push(`  (play {voice, pattern}: one bar = ${g.steps} cells, a stroke letter or "." each; bars joined by "|". Drums: ${Object.keys(drums).join(", ")})`);
-      }
+      L.push(`\n[${id}] ${describeCircle(cb, drums, heard, { now: nowMs, initiatorPresent })}`);
+      const g = gridOf(gridForGen(cb, this.soundingGen(cb, nowMs)));   // the grid `play` writes for
+      const ids = Object.keys(drums);
+      L.push(`  (play {voice, pattern}: one bar = ${g.steps} cells, a stroke letter or "." each; bars joined by "|". Drums in earshot: ${ids.slice(0, STRUCK_BOUNDS.SHOW_VOICES).join(", ")}${ids.length > STRUCK_BOUNDS.SHOW_VOICES ? ` +${ids.length - STRUCK_BOUNDS.SHOW_VOICES}` : ""})`);
+    }
+    if (audible.length > STRUCK_BOUNDS.SHOW_CIRCLES) {
+      L.push(`\n…and ${audible.length - STRUCK_BOUNDS.SHOW_CIRCLES} more drum circle(s) in earshot, not shown (the nearest ${STRUCK_BOUNDS.SHOW_CIRCLES} are)`);
     }
 
     const unread = this.inbox.slice(this.inboxCursor);

@@ -418,21 +418,39 @@ export function sharingUnknownDeadline({ synced, scheduledAtServerMs, pressedAtL
  *  queued, never what was heard. `win` is a plain object; noteStruck mutates
  *  it. Keyed by circle generation so a tempo change never mixes grids. */
 export function newStruckWindow(observedFrom = null) { return { observedFrom, voices: {} }; }
-export function noteStruck(win, ph, { steps, keepBars = 4, mine = false } = {}) {
+/** Bounds on what one observer keeps and prints, so a busy circle can never
+ *  flood a reader's context: KEEP_BARS per drum (older bars fall out), KEEP_VOICES
+ *  drums per window (the least recently struck falls out), and at most
+ *  SHOW_VOICES drums and SHOW_AUTHORS names per line in the description —
+ *  everything cut is SAID ("…and 4 more drums"), never silently dropped. */
+export const STRUCK_BOUNDS = Object.freeze({ KEEP_BARS: 4, KEEP_VOICES: 16, SHOW_VOICES: 8, SHOW_AUTHORS: 3, SHOW_CIRCLES: 3 });
+const lastStruck = (v) => Math.max(-Infinity, ...Object.values(v.bars).map((b) => b.gen * 1e9 + b.bar));
+export function noteStruck(win, ph, { steps, keepBars = STRUCK_BOUNDS.KEEP_BARS, mine = false } = {}) {
   const key = `${ph.voice}`;
-  const v = (win.voices[key] ??= { authors: new Set(), bars: {} });
-  if (ph.author) v.authors.add(ph.author);
+  const v = (win.voices[key] ??= { bars: {} });
   const put = (bar, cells) => {
     const k = `${ph.gen}:${bar}`;
-    const prev = v.bars[k]?.cells ?? '.'.repeat(steps);
-    const merged = [...prev].map((ch, i) => (cells[i] && cells[i] !== '.' ? cells[i] : ch)).join('');
-    v.bars[k] = { gen: ph.gen, bar, cells: merged, queued: !!mine };
+    const prev = v.bars[k];
+    const merged = [...(prev?.cells ?? '.'.repeat(steps))].map((ch, i) => (cells[i] && cells[i] !== '.' ? cells[i] : ch)).join('');
+    // who struck is kept ON THE BAR, so names age out with the bars they played
+    const authors = [...new Set([...(prev?.authors ?? []), ...(ph.author ? [ph.author] : [])])];
+    v.bars[k] = { gen: ph.gen, bar, cells: merged, queued: !!mine || !!prev?.queued, authors };
   };
   if (ph.live) put(ph.bar, '.'.repeat(ph.step) + ph.stroke + '.'.repeat(Math.max(0, steps - ph.step - 1)));
   else for (let i = 0; i < (ph.bars ?? 1); i++) put(ph.bar + i, ph.pattern.slice(i * steps, (i + 1) * steps));
   if (win.observedFrom === null) win.observedFrom = { gen: ph.gen, bar: ph.bar };
   const keys = Object.keys(v.bars).sort((a, b) => (v.bars[a].gen - v.bars[b].gen) || (v.bars[a].bar - v.bars[b].bar));
   while (keys.length > keepBars) delete v.bars[keys.shift()];
+  const ids = Object.keys(win.voices);
+  if (ids.length > STRUCK_BOUNDS.KEEP_VOICES) {
+    ids.sort((a, b) => lastStruck(win.voices[a]) - lastStruck(win.voices[b]));
+    for (const id of ids.slice(0, ids.length - STRUCK_BOUNDS.KEEP_VOICES)) delete win.voices[id];
+  }
+}
+/** "a, b, c +2": at most SHOW_AUTHORS names, the rest counted. */
+export function namesCapped(names, max = STRUCK_BOUNDS.SHOW_AUTHORS) {
+  if (!names.length) return '—';
+  return names.length <= max ? names.join(', ') : `${names.slice(0, max).join(', ')} +${names.length - max}`;
 }
 
 /** The circle in words — the SAME string on every client from the same data
@@ -457,13 +475,16 @@ export function describeCircle(c, instruments, win, { now, initiatorPresent = tr
   if (!vs.length) { lines.push(`  nothing struck or queued since you arrived`); return lines.join('\n'); }
   const span = vs.flatMap(([, v]) => Object.values(v.bars).map((b) => b.bar));
   lines.push(`  struck/queued, bars ${Math.min(...span)}–${Math.max(...span)} (observed since you arrived):`);
-  for (const [voice, v] of vs) {
+  // the most recently struck drums first; at most SHOW_VOICES of them, the rest counted
+  const shown = vs.sort(([, a], [, b]) => lastStruck(b) - lastStruck(a)).slice(0, STRUCK_BOUNDS.SHOW_VOICES);
+  for (const [voice, v] of shown) {
     const name = instruments?.[voice]?.name ?? voice;
-    const who = [...v.authors].join(', ') || '—';
     const bars = Object.values(v.bars).sort((a, b) => (a.gen - b.gen) || (a.bar - b.bar));
+    const who = namesCapped([...new Set(bars.flatMap((b) => b.authors ?? []))]);
     lines.push(`    ${name} (${who}): ${bars.map((b) => b.cells + (b.queued ? '*' : '')).join('  ')}`);
   }
-  if (vs.some(([, v]) => Object.values(v.bars).some((b) => b.queued))) lines.push(`  (* = yours, queued)`);
+  if (vs.length > shown.length) lines.push(`    …and ${vs.length - shown.length} more drum${vs.length - shown.length > 1 ? 's' : ''} struck, not shown`);
+  if (shown.some(([, v]) => Object.values(v.bars).some((b) => b.queued))) lines.push(`  (* = yours, queued)`);
   return lines.join('\n');
 }
 
@@ -472,7 +493,7 @@ export function describeCircle(c, instruments, win, { now, initiatorPresent = tr
  *  never a pattern, never what was heard (what was struck is look()'s). `c`
  *  may be null (a removed circle). Pure. */
 export function circleLifecycleLine(id, c, how, authors) {
-  const who = authors?.length ? authors.join(', ') : 'someone';
+  const who = authors?.length ? namesCapped(authors) : 'someone';
   if (how === 'began') {
     const grid = c && !c.ended ? ` (${c.bpm} BPM, ${c.meter}/4)` : '';
     return `a drum circle near you began playing [${id}]${grid}: ${who}. What is struck is in look().`;

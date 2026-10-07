@@ -21,7 +21,7 @@ const PRELOAD = join(ROOT, 'tools', 'drum-mutant-preload.mjs');
 const only = process.argv.slice(2);
 
 const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', hydr: 'tools/hydration-test.ts',
-  phrase: 'tools/phrase-test.ts' };
+  phrase: 'tools/phrase-test.ts', client: 'tools/drum-client-test.ts' };
 const LIVE = { live: ['tools/circle-live-test.ts', []], comptest: ['tools/comptest.ts', []],
   'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']],
   'phrase-live': ['tools/phrase-live-test.ts', []], mcpl: ['tools/drum-mcpl-test.ts', []] };
@@ -50,7 +50,7 @@ function runTest(test, mutant) {
 let ok = true, controlOk = true;
 console.log('\ncontrol (preload active, no mutant):');
 const wanted = new Set(MUTANTS.filter((x) => !only.length || only.includes(x.id)).flatMap((x) => x.tests));
-const controls = ['circle', 'tag', 'hydr', 'phrase', 'live', 'comptest', 'hydr-live', 'phrase-live', 'mcpl', 'probe']
+const controls = ['circle', 'tag', 'hydr', 'phrase', 'client', 'live', 'comptest', 'hydr-live', 'phrase-live', 'mcpl', 'probe']
   .filter((t) => !only.length || wanted.has(t));
 if (controls.includes('probe') && !process.env.SFU_TEST_CHROME) {
   console.log('  ✗ probe: SFU_TEST_CHROME is not set — the browser mutants cannot run (refusing a silent skip)');

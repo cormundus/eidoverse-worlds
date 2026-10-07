@@ -1,0 +1,219 @@
+# A1 demo world 2 (redacted: the scratch world key)
+[drum-scratch] owned world up: http://127.0.0.1:25294 pid=19280 nonce=601d28a8-754d-4062-91d1-a6629b6486b4 dir=$DRUM_SCRATCH_ROOT\2026-10-07T00-12-27-802Z-drum-demo-a1b-601d28a8
+[physics] headless body engine: ammo
+
+  open:  http://127.0.0.1:25294/?world=drumcircle&key=REDACTED&name=adam
+  90 BPM, 4/4 in sixteenths; the resident plays the LOW drum; walk to the HAND drum (left crate) to play.
+  runs 25 min, then tears down.
+
+  [drummer] bars 1–4 accepted (lands in 4.8 s)
+  [drummer] bars 5–8 accepted (lands in 7.4 s)
+  [drummer] bars 9–12 accepted (lands in 7.3 s)
+  [drummer] bars 13–16 accepted (lands in 7.3 s)
+  [drummer] bars 17–20 accepted (lands in 7.2 s)
+  [drummer] bars 21–24 accepted (lands in 7.1 s)
+  [drummer] bars 25–28 accepted (lands in 7.0 s)
+  [drummer] bars 29–32 accepted (lands in 7.0 s)
+  [drummer] bars 33–36 accepted (lands in 6.9 s)
+  [drummer] bars 37–40 accepted (lands in 6.8 s)
+  [drummer] bars 41–44 accepted (lands in 6.7 s)
+  [drummer] bars 45–48 accepted (lands in 8.0 s)
+  [drummer] bars 49–52 accepted (lands in 7.9 s)
+  [drummer] bars 53–56 accepted (lands in 7.8 s)
+  [drummer] bars 57–60 accepted (lands in 7.8 s)
+  [drummer] bars 61–64 accepted (lands in 7.7 s)
+  [drummer] bars 65–68 accepted (lands in 7.6 s)
+  [drummer] bars 69–72 accepted (lands in 7.6 s)
+  [drummer] bars 73–76 accepted (lands in 7.5 s)
+  [drummer] bars 77–80 accepted (lands in 7.4 s)
+  [drummer] bars 81–84 accepted (lands in 7.3 s)
+  [drummer] bars 85–88 accepted (lands in 7.2 s)
+  [drummer] bars 89–92 accepted (lands in 7.2 s)
+  [drummer] bars 93–96 accepted (lands in 7.1 s)
+  [drummer] bars 97–100 accepted (lands in 7.0 s)
+  [drummer] bars 101–104 accepted (lands in 7.0 s)
+  [drummer] bars 105–108 accepted (lands in 6.9 s)
+  [drummer] bars 109–112 accepted (lands in 6.8 s)
+  [drummer] bars 113–116 accepted (lands in 6.8 s)
+  [drummer] bars 117–120 accepted (lands in 6.7 s)
+  [drummer] bars 121–124 accepted (lands in 8.0 s)
+  [drummer] bars 125–128 accepted (lands in 7.9 s)
+  [drummer] bars 129–132 accepted (lands in 7.8 s)
+  [drummer] bars 133–136 accepted (lands in 7.7 s)
+  [drummer] bars 137–140 accepted (lands in 7.6 s)
+  [drummer] bars 141–144 accepted (lands in 7.6 s)
+  [drummer] bars 145–148 accepted (lands in 7.5 s)
+  [drummer] bars 149–152 accepted (lands in 7.4 s)
+  [drummer] bars 153–156 accepted (lands in 7.4 s)
+  [drummer] bars 157–160 accepted (lands in 7.3 s)
+  [drummer] bars 161–164 accepted (lands in 7.2 s)
+  [drummer] bars 165–168 accepted (lands in 7.2 s)
+  [drummer] bars 169–172 accepted (lands in 7.1 s)
+  [drummer] bars 173–176 accepted (lands in 7.0 s)
+  [drummer] bars 177–180 accepted (lands in 6.9 s)
+  [drummer] bars 181–184 accepted (lands in 6.9 s)
+  [drummer] bars 185–188 accepted (lands in 6.8 s)
+  [drummer] bars 189–192 accepted (lands in 6.7 s)
+  [drummer] bars 193–196 accepted (lands in 8.0 s)
+  [drummer] bars 197–200 accepted (lands in 7.9 s)
+  [drummer] bars 201–204 accepted (lands in 7.9 s)
+  [drummer] bars 205–208 accepted (lands in 7.8 s)
+  [drummer] bars 209–212 accepted (lands in 7.7 s)
+  [drummer] bars 213–216 accepted (lands in 7.7 s)
+  [drummer] bars 217–220 accepted (lands in 7.6 s)
+  [drummer] bars 221–224 accepted (lands in 7.5 s)
+  [drummer] bars 225–228 accepted (lands in 7.4 s)
+  [drummer] bars 229–232 accepted (lands in 7.3 s)
+  [drummer] bars 233–236 accepted (lands in 7.2 s)
+  [drummer] bars 237–240 accepted (lands in 7.2 s)
+  [drummer] bars 241–244 accepted (lands in 7.1 s)
+  [drummer] bars 245–248 accepted (lands in 7.0 s)
+  [drummer] bars 249–252 accepted (lands in 7.0 s)
+  [drummer] bars 253–256 accepted (lands in 6.9 s)
+  [drummer] bars 257–260 accepted (lands in 6.9 s)
+  [drummer] bars 261–264 accepted (lands in 6.8 s)
+  [drummer] bars 265–268 accepted (lands in 6.7 s)
+  [drummer] bars 269–272 accepted (lands in 6.7 s)
+  [drummer] bars 273–276 accepted (lands in 8.0 s)
+  [drummer] bars 277–280 accepted (lands in 7.9 s)
+  [drummer] bars 281–284 accepted (lands in 7.8 s)
+  [drummer] bars 285–288 accepted (lands in 7.8 s)
+  [drummer] bars 289–292 accepted (lands in 7.7 s)
+  [drummer] bars 293–296 accepted (lands in 7.7 s)
+  [drummer] bars 297–300 accepted (lands in 7.6 s)
+  [drummer] bars 301–304 accepted (lands in 7.5 s)
+  [drummer] bars 305–308 accepted (lands in 7.4 s)
+  [drummer] bars 309–312 accepted (lands in 7.4 s)
+  [drummer] bars 313–316 accepted (lands in 7.3 s)
+  [drummer] bars 317–320 accepted (lands in 7.2 s)
+  [drummer] bars 321–324 accepted (lands in 7.1 s)
+  [drummer] bars 325–328 accepted (lands in 7.1 s)
+  [drummer] bars 329–332 accepted (lands in 7.0 s)
+  [drummer] bars 333–336 accepted (lands in 6.9 s)
+  [drummer] bars 337–340 accepted (lands in 6.9 s)
+  [drummer] bars 341–344 accepted (lands in 6.8 s)
+  [drummer] bars 345–348 accepted (lands in 6.7 s)
+  [drummer] bars 349–352 accepted (lands in 8.0 s)
+  [drummer] bars 353–356 accepted (lands in 7.9 s)
+  [drummer] bars 357–360 accepted (lands in 7.8 s)
+  [drummer] bars 361–364 accepted (lands in 7.7 s)
+  [drummer] bars 365–368 accepted (lands in 7.6 s)
+  [drummer] bars 369–372 accepted (lands in 7.6 s)
+  [drummer] bars 373–376 accepted (lands in 7.5 s)
+  [drummer] bars 377–380 accepted (lands in 7.4 s)
+  [drummer] bars 381–384 accepted (lands in 7.3 s)
+  [drummer] bars 385–388 accepted (lands in 7.3 s)
+  [drummer] bars 389–392 accepted (lands in 7.2 s)
+  [drummer] bars 393–396 accepted (lands in 7.1 s)
+  [drummer] bars 397–400 accepted (lands in 7.0 s)
+  [drummer] bars 401–404 accepted (lands in 6.9 s)
+  [drummer] bars 405–408 accepted (lands in 6.8 s)
+  [drummer] bars 409–412 accepted (lands in 6.7 s)
+  [drummer] bars 413–416 accepted (lands in 6.7 s)
+  [drummer] bars 417–420 accepted (lands in 8.0 s)
+  [drummer] bars 421–424 accepted (lands in 7.9 s)
+  [drummer] bars 425–428 accepted (lands in 7.8 s)
+  [drummer] bars 429–432 accepted (lands in 7.7 s)
+  [drummer] bars 433–436 accepted (lands in 7.6 s)
+  [drummer] bars 437–440 accepted (lands in 7.6 s)
+  [drummer] bars 441–444 accepted (lands in 7.5 s)
+  [drummer] bars 445–448 accepted (lands in 7.4 s)
+  [drummer] bars 449–452 accepted (lands in 7.3 s)
+  [drummer] bars 453–456 accepted (lands in 7.2 s)
+  [drummer] bars 457–460 accepted (lands in 7.1 s)
+  [drummer] bars 461–464 accepted (lands in 7.1 s)
+  [drummer] bars 465–468 accepted (lands in 7.0 s)
+  [drummer] bars 469–472 accepted (lands in 6.9 s)
+  [drummer] bars 473–476 accepted (lands in 6.8 s)
+  [drummer] bars 477–480 accepted (lands in 6.8 s)
+  [drummer] bars 481–484 accepted (lands in 6.7 s)
+  [drummer] bars 485–488 accepted (lands in 7.9 s)
+  [drummer] bars 489–492 accepted (lands in 7.9 s)
+  [drummer] bars 493–496 accepted (lands in 7.8 s)
+  [drummer] bars 497–500 accepted (lands in 7.8 s)
+  [drummer] bars 501–504 accepted (lands in 7.7 s)
+  [drummer] bars 505–508 accepted (lands in 7.6 s)
+  [drummer] bars 509–512 accepted (lands in 7.5 s)
+  [drummer] bars 513–516 accepted (lands in 7.5 s)
+  [drummer] bars 517–520 accepted (lands in 7.4 s)
+  [drummer] bars 521–524 accepted (lands in 7.4 s)
+  [drummer] bars 525–528 accepted (lands in 7.3 s)
+  [drummer] bars 529–532 accepted (lands in 7.2 s)
+  [drummer] bars 533–536 accepted (lands in 7.2 s)
+  [drummer] bars 537–540 accepted (lands in 7.1 s)
+  [drummer] bars 541–544 accepted (lands in 7.0 s)
+  [drummer] bars 545–548 accepted (lands in 7.0 s)
+  [drummer] bars 549–552 accepted (lands in 6.9 s)
+  [drummer] bars 553–556 accepted (lands in 6.8 s)
+  [drummer] bars 557–560 accepted (lands in 6.8 s)
+  [drummer] bars 561–564 accepted (lands in 6.7 s)
+
+  [drummer] 141 passages accepted, 0 refused, over 25 min
+  what the drummer's body saw:
+You are "drummer" in world "drumcircle" at (0.0, 0.0), ground height 0.00m, facing S.
+  - [hand] crate large red: 2.7m NW at (-1.2, 0.0, -2.4) — drum "hand" in circle drums, strokes B T S
+  - [low] crate large red: 2.7m NE at (1.2, 0.0, -2.4) — drum "low" in circle drums, strokes B M
+  - [drums] crate large red: 3.0m N at (0.0, 0.0, -3.0) — a drum circle (see below)
+[drums] a drum circle, 90 BPM, 4/4 in sixteenths (gen 1), started by keeper
+  struck/queued, bars 42–564 (observed since you arrived):
+    low (drummer): B.......B.B.....*  B.......B.B.....*  B.......B.B.....*  B...M...B.B.M.M.*
+    hand (adam): ..T..T..........  ......T.......T.  ......T......T..  ......T.......T.
+  (* = yours, queued)
+  (play {voice, pattern}: one bar = 16 cells, a stroke letter or "." each; bars joined by "|". Drums in earshot: hand, low)
+  * adam arrived
+  * adam left
+[drum-scratch] receipt {
+  "label": "drum-demo-a1b",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-07T00-12-27-802Z-drum-demo-a1b-601d28a8\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-07T00-12-27-802Z-drum-demo-a1b-601d28a8",
+  "port": 25294,
+  "origin": "http://127.0.0.1:25294",
+  "pid": 19280,
+  "nonce": "601d28a8-754d-4062-91d1-a6629b6486b4",
+  "mutant": null,
+  "startedAt": "2026-10-07T00:12:27.802Z",
+  "endedAt": "2026-10-07T00:37:30.688Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$LIBRARY",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}

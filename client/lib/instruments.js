@@ -256,15 +256,20 @@ export function clearInstruments() {
 
 // ---- the pad: the hitter's drum, and what it knows -------------------------------
 let padEl = null, padVoice = null;
-function nearestDrum() {
-  camera.getWorldPosition(_pos);
+/** The drum you STAND at: measured from your body on the ground plane. The
+ *  third-person camera rides metres behind and above the body (5.9 m back while
+ *  standing 1.2 m from a drum, measured in the A1 demo), so measuring from it
+ *  never opened the pad. The camera is only the fallback, for a bodiless view. */
+function nearestDrum(body) {
+  const at = body ?? camera.getWorldPosition(_pos);
   let best = null, bestD = PAD_RADIUS;
   for (const [id, e] of Object.entries(ents())) {
     const inst = e?.comp?.instrument;
     if (!inst || inst.ended || !circleRunning(circleOf(inst.circle))) continue;
     const root = entities.get(id);
     if (!root) continue;
-    const d = root.getWorldPosition(new THREE.Vector3()).distanceTo(_pos);
+    const p = root.getWorldPosition(new THREE.Vector3());
+    const d = Math.hypot(p.x - at.x, p.z - at.z);
     if (d < bestD) { best = id; bestD = d; }
   }
   return best;
@@ -286,6 +291,17 @@ function render() {
     windows.get(inst?.circle), { now: serverNow() });
   const recent = [...hits.values()].slice(-5).reverse().map((h) => `${h.msg.stroke}  ${h.label}`).join('\n');
   padEl.innerHTML = '';
+  // The pad is anchored by its BOTTOM edge, so anything that grows pushes what
+  // sits above it upward. The text lives in fixed-height boxes on top and the
+  // buttons on the last row: the box never changes size, and a button stays
+  // under the hand that is striking it (Adam, A1 demo: they rode up as text came in).
+  const box = (t, lines) => {
+    const d = document.createElement('div'); d.textContent = t;
+    d.style.cssText = `height:${(lines * 1.35).toFixed(2)}em;overflow:hidden;margin-bottom:6px`;
+    padEl.appendChild(d);
+  };
+  box(text, 8);
+  box(recent ? `your hits:\n${recent}` : 'your hits: none yet', 6);
   const head = document.createElement('div'); head.textContent = `${inst?.name ?? voice} — strike:`; padEl.appendChild(head);
   for (const L of letters) {
     const b = document.createElement('button');
@@ -297,13 +313,11 @@ function render() {
     b.onpointerdown = (ev) => { ev.preventDefault(); press(voice, L); };
     padEl.appendChild(b);
   }
-  const g = document.createElement('div'); g.textContent = text; g.style.marginTop = '4px'; padEl.appendChild(g);
-  if (recent) { const r = document.createElement('div'); r.textContent = `your hits:\n${recent}`; r.style.marginTop = '6px'; padEl.appendChild(r); }
 }
 let padTick = 0;
 /** Slower system: find the drum you stand at, and refresh the pad text. */
-export function tickPad() {
-  const v = nearestDrum();
+export function tickPad(body = null) {
+  const v = nearestDrum(body);
   if (v !== padVoice || ++padTick % 15 === 0) { padVoice = v; render(); }
 }
 

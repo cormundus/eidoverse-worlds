@@ -556,7 +556,7 @@ registerSystem('materials', (dt, t, now) => updateMaterials(now)); // weather â†
 registerSystem('rig', (dt, t, now) => updateRig(now));          // light slots follow requests
 registerSystem('sounds', () => tickSounds(), { every: 2 });      // panners follow entities, the listener the camera
 registerSystem('instruments', () => tickInstruments());         // drum steps â†’ WebAudio inside a short window (never late); hit deadlines
-registerSystem('drum-pad', () => tickPad(), { every: 6 });      // the pad appears at a drum
+registerSystem('drum-pad', () => tickPad(getMe() ? myState.pos : null), { every: 6 });   // the pad appears at the drum your BODY stands at
 registerSystem('me-drive', (dt) => {
   if (CONFIG.renderer) { /* camera is driven per snap request */ }
   else if (CONFIG.spectate) updateSpectator(dt, CONFIG.follow ? remotes.get(CONFIG.follow) : null);

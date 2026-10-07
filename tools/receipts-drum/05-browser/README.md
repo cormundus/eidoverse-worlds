@@ -23,6 +23,9 @@
   it in the demo.
 - **`shared/circle.js`:** `chooseLiveStep`, `sharingUnknownDeadline`, and the struck window
   and `describeCircle`, the one description the pad, Lite and mcpl all print.
+  **Correction (2026-10-07): Lite does not print it.** The Lite client carries no drum code
+  in rung zero. The pad and mcpl print `describeCircle`; Lite is an abstention, recorded in
+  the packet.
 - **`client/lib/net.js`:** `sendPhrase`, bus events for `phrase` and `phrase-receipt`, and
   `leave` carrying its `gen`.
 - **`client/main.js`:** the systems are registered, and `EW.drums` is exposed for probes.

@@ -1,0 +1,22 @@
+# head 1c87318 + tools/drum-lead-table.ts
+policy: PROVISIONAL_TEST_VALUE  L 150 ms · F 50 ms · H 16 bars
+
+H = 16 bars, in SECONDS (rows: beats per bar; columns: BPM)
+
+meter │    40    60    90   120   180   240
+──────┼────────────────────────────────────
+    2 │    48    32    21    16    11   8.0
+    3 │    72    48    32    24    16    12
+    4 │    96    64    43    32    21    16
+    6 │   144    96    64    48    32    24
+    8 │   192   128    85    64    43    32
+   12 │   288   192   128    96    64    48
+
+range: 8.0 s (240 BPM, 2 beats) … 288.0 s (40 BPM, 12 beats)
+L and F in bars at the extremes: L 150 ms = 0.30 bar at 240/2, 0.0083 bar at 40/12
+  240 BPM, 2 beats: 8 s ✓
+  90 BPM, 4 beats: 42.7 s ✓
+  40 BPM, 4 beats: 96 s ✓
+  40 BPM, 12 beats: 288 s ✓
+
+all four of Mica's hand-computed figures match

@@ -1,0 +1,17 @@
+# base 83ea82c + tools/phrase-identity-test.ts from the repair
+
+phrase identity — tuples, never joined strings
+
+1. Mica's two tuples, on the same gen and bar
+  ✓ (author 'a|b', voice 'c', gen 1, bar 1) is accepted
+  ✗ (author 'a', voice 'b|c', gen 1, bar 1) is ALSO accepted — a different tuple, never 'already taken' — {"type":"phrase-receipt","n":1,"circle":"drums","gen":1,"voice":"b|c","voiceGen":1,"ok":false,"acceptedAtServerMs":1791428718544,"why":"a planned slot is already taken: bar 1 of your \"b|c\" — refused, never swapped in"}
+
+2. the slot and dedupe rules are unchanged
+  ✓ the SAME tuple again (new n) is refused by name: bar 1 is taken
+  ✓ a resend of n 1 returns the ORIGINAL receipt, marked dup
+  ✓ a third author on the same bar is accepted (slots are per author and voice)
+  ✓ the same identity on a NEW leg is still refused that bar (claims are per author, not per leg)
+  ✓ …and its n 1 is judged fresh, not a dup of the old leg's n 1 (receipt windows are per leg)
+
+6 passed, 1 failed
+exit 1

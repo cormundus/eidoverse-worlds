@@ -1,0 +1,5 @@
+# base 83ea82c + tools/phrase-tables-test.ts from the repair
+SyntaxError: Export named 'phraseTableStats' not found in module '$BASE_WORKTREE\server\phrases.ts'.
+
+Bun v1.3.14 (Windows x64)
+exit 1

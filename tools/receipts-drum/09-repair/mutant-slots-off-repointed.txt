@@ -1,0 +1,11 @@
+
+control (preload active, no mutant):
+  ✓ phrase-live: 29 passed, 0 failed
+
+mutants:
+  ✓ KILLED slots-off — one planned phrase per (author, voice, gen, bar); overlap refuses whole (§2.3)
+      phrase-live 27 passed, 2 failed
+      red: ✗ a second planned phrase for the same bar is refused, never swapped in
+      red: ✗ a 3-bar passage overlapping only its MIDDLE bar is refused whole
+
+1/1 mutants killed; control green

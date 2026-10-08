@@ -1,0 +1,243 @@
+# head 4f9b459 — the full mutant table
+
+control (preload active, no mutant):
+  ✓ circle: 61 passed, 0 failed
+  ✓ tag: 11 passed, 0 failed
+  ✓ hydr: 30 passed, 0 failed
+  ✓ phrase: 37 passed, 0 failed
+  ✓ client: 28 passed, 0 failed
+  ✓ ident: 7 passed, 0 failed
+  ✓ tables: 12 passed, 0 failed
+  ✓ live: 27 passed, 0 failed
+  ✓ comptest: 36 passed, 0 failed
+  ✓ hydr-live: 15 passed, 0 failed
+  ✓ phrase-live: 29 passed, 0 failed
+  ✓ lifecycle: 13 passed, 0 failed
+  ✓ mcpl: 44 passed, 0 failed
+  ✓ probe: 20 passed, 0 failed
+
+mutants:
+  ✓ KILLED emit-gate-open — script emits may not write circle-set/instrument-set (§2.6)
+      live 26 passed, 1 failed
+      red: ✗ the emit is refused by name — []
+  ✓ KILLED guard-list-off — the two verbs are in GUARD_AUTHORED (§2.1)
+      live 26 passed, 1 failed
+      red: ✗ a builder who isn't the placer is refused on a GUARDED drum (GUARD_AUTHORED) — null
+  ✓ KILLED vcomp-door-open — vComp refuses comp of a protected type (one writer path)
+      live 25 passed, 2 failed · comptest 35 passed, 1 failed
+      red: ✗ even the owner's comp of type circle is refused — null
+      red: ✗ comp cannot write a circle (circle-set is its one writer path) — mount wants {id, to: <existing entity>, slot?, offset?, yaw?}; component 
+  ✓ KILLED fold-comp-open — the fold refuses comp of a protected type
+      circle 58 passed, 3 failed
+      red: ✗ a plain comp of type circle folds to nothing
+  ✓ KILLED fold-start-successor — a start folds only as the exact successor generation
+      circle 59 passed, 2 failed
+      red: ✗ a start with a non-successor gen folds to nothing
+      red: ✗ a restart stamped gen 1 (a reset) folds to nothing
+  ✓ KILLED gen-resets — generations never reset on an entity (§2.5, the stale-dup fix)
+      circle 59 passed, 2 failed · live 26 passed, 1 failed
+      red: ✗ after end, a new start continues the generation: gen 4, never 1 — {"ok":true,"args":{"id":"drums","op":"start","bpm":100,"meter":4,"subdiv
+      red: ✗ a new start continues: gen 3, never 1 — {"id":"drums","op":"start","bpm":100,"meter":4,"subdivision":4,"countIn":2,"t0":1791429150521,"gen
+  ✓ KILLED lead-floor-off — a tempo change needs at least H bars of lead (§2.1)
+      circle 60 passed, 1 failed · live no summary (exit 1)
+      red: ✗ lead 15 (< H) is refused
+      red: ✗ lead 15 (< H = 16) is refused — null
+  ✓ KILLED initiator-rule-off — only the initiator, owner or an operator may change or end (§2.1)
+      circle 60 passed, 1 failed · live no summary (exit 1)
+      red: ✗ a non-initiator may not change it
+      red: ✗ a builder who is not the initiator is refused — null
+  ✓ KILLED pending-rule-off — one pending change at a time; no change before the start (§2.1)
+      circle 59 passed, 2 failed · live 19 passed, 8 failed
+      red: ✗ before the circle has started (and no prior change), a change is refused
+      red: ✗ a second change while one is pending is refused, naming bar 20
+      red: ✗ a change before the circle has started is refused — null
+      red: ✗ a second change while one is pending is refused, naming its bar — null
+  ✓ KILLED fold-voicegen-successor — an instrument edit folds only as voiceGen + 1 (§2.2)
+      circle 60 passed, 1 failed
+      red: ✗ a non-successor voiceGen folds to nothing
+  ✓ KILLED synth-open — an unknown synth fails closed (§2.2)
+      circle 59 passed, 2 failed · live 26 passed, 1 failed
+      red: ✗ an unknown synth is refused at the door
+      red: ✗ an unknown synth folds to nothing (fails closed)
+      red: ✗ an unknown synth is refused — null
+  ✓ KILLED tag-undeclared — the world feature set declares eidoverse:circle (§5)
+      tag 7 passed, 4 failed
+      red: ✗ the world feature set's ontology declares it — ["eidoverse:whisper","eidoverse:approach","eidoverse:depart","eidoverse:reach","eidoverse:t
+  ✓ KILLED tag-treatment-wakes — its suggested treatment only quiets (a throttle, never immediate)
+      tag 9 passed, 2 failed
+      red: ✗ …and it only QUIETS: a 300 s throttle, like the activity digest — {"tagsAny":["eidoverse:circle"],"behavior":"immediate"}
+      red: ✗ no suggested rule anywhere wakes (no `immediate`)
+  ✓ KILLED seed-agent-off — the agent seeds protected bags from the snapshot before the tail (§4.7)
+      hydr-live no summary (exit 1)
+      red: ✗ agent drums.circle = server — undefined
+      red: ✗ a live edit after the join reaches the agent as voiceGen 4 — undefined
+  ✓ KILLED seed-browser-off — the browser passes its wholesale copy through the same normalizer (§4.7)
+      hydr 28 passed, 2 failed
+      red: ✗ an instrument bag naming an unknown synth is dropped on both
+  ✓ KILLED seed-normalize-off — seeding fails closed through the shared normalizer (§4.7, carry note 2)
+      hydr 26 passed, 4 failed
+      red: ✗ a malformed circle bag is DROPPED on the agent (fails closed)
+  ✓ KILLED entries-carry-protected — protected bags never travel as entries (stateToEntries omits them)
+      hydr 29 passed, 1 failed
+      red: ✗ stateToEntries emits no comp of a protected type
+  ✓ KILLED leave-gen-off — a leave carries the departing leg's generation (§4.4)
+      hydr-live 13 passed, 2 failed
+      red: ✗ leave carries an integer gen — {"type":"leave","id":"carol"}
+  ✓ KILLED dedupe-off — a resend of a stored n returns the ORIGINAL receipt and relays nothing (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ a resend of n 10 returns the ORIGINAL receipt, marked dup — {"type":"phrase-receipt","n":10,"circle":"drums","gen":1,"voice":"hand","voice
+  ✓ KILLED window-old-off — an n older than the receipt window is refused: too old to verify (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ with the window full (64), an n older than all of it is refused: too old to verify — {"type":"phrase-receipt","n":50,"circle":"drums","gen
+  ✗ slots-off: STALE — find does not match exactly once in server/phrases.ts
+  ✓ KILLED relay-to-sender — the relay excludes the sender; the sender schedules from its receipt (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ bob is NOT sent his own relay (he schedules from his receipt)
+  ✓ KILLED author-from-client — the server inserts author and legGen; clients never author them (§2.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ carol hears it: author = bob (the client's 'mallory' ignored), legGen from the server (not 999) — {"type":"phrase","circle":"drums","gen":
+  ✓ KILLED rate-off — the per-leg phrase budget refuses WITH a receipt (§4.1)
+      phrase-live 28 passed, 1 failed
+      red: ✗ past 16 per second, the refusal names the phrase rate — ["letter \"Q\" is not a stroke this drum declares (BS)","letter \"Q\" is not a str
+  ✓ KILLED spectator-off — spectators and aux legs cannot play, and are told so (§4.3)
+      phrase-live 28 passed, 1 failed
+      red: ✗ a spectator gets a receipt: can't play — {"type":"phrase-receipt","n":1,"circle":"drums","gen":1,"voice":"hand","voiceGen":1,"ok":true,"ba
+  ✓ KILLED countin-off — bars 0…countIn−1 are the initiator's alone (§2.1)
+      phrase 34 passed, 3 failed · phrase-live 28 passed, 1 failed
+      red: ✗ a non-initiator's bar 0 is refused: count-in — the circle opens at bar 1
+      red: ✗ a count-in overlap refuses the WHOLE non-initiator passage (bars 1–4, count-in 2)
+      red: ✗ bob's bar 0 is refused: count-in — the circle opens at bar 1 — {"type":"phrase-receipt","n":1,"circle":"drums","gen":1,"voice":"hand","voi
+  ✓ KILLED floor-off — a named bar must begin at least F after acceptance (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ bar 4 at T + 10,640 is refused: "begins in 26.67 ms, too close to relay; next open bar is 5"
+  ✓ KILLED horizon-clamped — a pending grid's NEGATIVE current bar is never clamped (carry note 6)
+      phrase 34 passed, 3 failed
+      red: ✗ at the request (T + 10,000) gen-3 bar 0 is refused as too far (current bar −22, horizon −6)
+      red: ✗ bar 0 enters the horizon at exactly T + 21,333.33 (refused at …32, accepted at …34)
+      red: ✗ an 8-bar gen-3 passage (bars 0–7) is admissible only from T + 35,333.33
+  ✓ KILLED crossing-off — a passage may not cross a scheduled tempo change (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ a 4-bar gen-2 phrase for bars 18–21 is refused: "crosses the tempo change at bar 20"
+  ✓ KILLED live-span-off — a live hit must fall inside its generation's span (§2.1, §2.4)
+      phrase 36 passed, 1 failed
+      red: ✗ gen-2 step 320 (bar 20 step 0, = until) is refused: outside gen 2's span
+  ✓ KILLED pipe-anywhere — `|` is allowed only at bar boundaries (§2.3)
+      phrase 36 passed, 1 failed
+      red: ✗ a `|` mid-bar is refused
+  ✓ KILLED bus-bypass — drums reach the speakers only through the world bus (rule 3, A5)
+      probe 19 passed, 1 failed
+      red: ✗ at world volume 1 the same strike is heard (peak > 0.01) — 0
+  ✓ KILLED own-echo — the hitter never plays the shared copy of their own hit (rule 4, A10)
+      probe 19 passed, 1 failed
+      red: ✗ a phrase carrying the hitter's own id is never queued (the guard behind the server's sender exclusion) — {"other":4,"own":4}
+  ✓ KILLED refusal-masked — a refused hit says local only, with the reason (rule 5, A10)
+      probe 19 passed, 1 failed
+      red: ✗ a refused hit (inside bea's count-in) reads 'local only — not shared: count-in…' — {"n":4,"msg":{"live":true,"circle":"drum3","voice":"han
+  ✓ KILLED retry-unbounded — one same-n retry, then sharing unknown (rule 5, A10)
+      probe 19 passed, 1 failed
+      red: ✗ a hit whose send AND same-n retry are dropped ends 'sharing unknown' — never shared, never twice — {"n":5,"msg":{"live":true,"circle":"dru
+  ✓ KILLED steal-off — bounded polyphony, oldest voice stolen (rule 6, A6)
+      probe 18 passed, 2 failed
+      red: ✗ bea never exceeds the drum's polyphony (4) during the roll — {"peak":14,"stolen":0}
+      red: ✗ …because the oldest voices were stolen — {"peak":14,"stolen":0}
+  ✓ KILLED remove-keeps-voice — a removed drum drops its voices and panner (rule 7, A8)
+      probe 19 passed, 1 failed
+      red: ✗ removing a drum drops its voices and its panner — {"q":0,"panners":["hand","fasthand"],"voices":["hand","fasthand"]}
+  ✓ KILLED clear-leaks — clearInstruments leaves nothing behind (rule 7, A8)
+      probe 19 passed, 1 failed
+      red: ✗ a full clear (clearInstruments) leaves no queue, voices or panners — {"q":0,"p":1,"v":1}
+  ✓ KILLED pad-from-camera — the pad opens at the drum the BODY stands at, not the camera (Adam, A1 demo)
+      probe 18 passed, 2 failed
+      red: ✗ standing 1 m from a drum (the camera well behind), the pad opens with the drum's strokes — {"shown":false,"h":0,"buttons":""}
+  ✓ KILLED pad-grows — the pad never changes size, so the buttons stay under the hand (Adam, A1 demo)
+      probe 19 passed, 1 failed
+      red: ✗ the pad keeps its height as hits and text come in, so the buttons stay under the hand — 300 → 251 px
+  ✓ KILLED line-per-phrase — one eidoverse:circle line per circle per quiet window, never per phrase (§5, A9)
+      mcpl 37 passed, 7 failed
+      red: ✗ the listener got exactly ONE line for four passages: 'began', naming who plays — [{"ts":1791429537784,"kind":"circle","who":"resident","te
+  ✓ KILLED agent-self-echo — a body gets no line for its own playing (the self-echo rule)
+      mcpl 42 passed, 2 failed
+      red: ✗ a phrase under the listener's own name opens no line (the guard behind the server's sender exclusion) — 1
+  ✓ KILLED earshot-intake-off — a drum beyond its own sound radius never enters the window or opens a line (earshot, Adam 10-06)
+      mcpl 43 passed, 1 failed
+      red: ✗ a circle beyond the listener's radius makes no line (212 m away; radius 30) — {"farR":true,"lines":[{"ts":1791429590605,"kind":"circle","w
+  ✓ KILLED earshot-look-off — look() reads only the drums in earshot
+      mcpl 42 passed, 2 failed
+      red: ✗ exactly the circles with a drum in earshot are counted: drum3 and f1–f4 (5), so 2 are cut — the circle 212 m away is not among them — …and
+      red: ✗ having walked out of earshot, look() describes no circle (what was heard stays in the window, unread) —   - [faraway] drum: 70.7m SE at (1
+  ✓ KILLED circles-uncapped — look() describes at most SHOW_CIRCLES circles, the rest counted (flooding)
+      mcpl 42 passed, 2 failed
+      red: ✗ at most 3 circles are described, nearest first, and the rest are counted in words — 5 blocks
+  ✓ KILLED voices-uncapped — a description shows at most SHOW_VOICES drums, the rest counted (flooding)
+      client 27 passed, 1 failed · mcpl 43 passed, 1 failed
+      red: ✗ …and describes at most 8 of them, newest first, counting the rest in words — a drum circle, 90 BPM, 4/4 in sixteenths (gen 2), started by 
+      red: ✗ a circle of nine played drums shows eight and counts the ninth —   (play {voice, pattern}: one bar = 96 cells, a stroke letter or "." each
+  ✓ KILLED authors-uncapped — at most SHOW_AUTHORS names per drum line, the rest counted (flooding)
+      client 27 passed, 1 failed · mcpl 43 passed, 1 failed
+      red: ✗ names age out WITH their bars: bar 1 fell out, so a1 is gone; four names read as three and a count —     hand (a2, a3, a4, a5), bars 2–5: 
+      red: ✗ five names on one drum read as three and a count —   (play {voice, pattern}: one bar = 96 cells, a stroke letter or "." each; bars joined 
+  ✓ KILLED authors-forever — names age out with the bars they played
+      client 27 passed, 1 failed
+      red: ✗ names age out WITH their bars: bar 1 fell out, so a1 is gone; four names read as three and a count —     hand (a1, a2, a3 +2), bars 2–5: B
+  ✓ KILLED tuple-joined — a claim's identity is the tuple, never a delimiter-joined string (blocker 2)
+      ident 6 passed, 1 failed
+      red: ✗ (author 'a', voice 'b|c', gen 1, bar 1) is ALSO accepted — a different tuple, never 'already taken' — {"type":"phrase-receipt","n":1,"circ
+  ✓ KILLED leg-identity-collapsed — a receipt window belongs to ONE leg (id, legGen)
+      ident 5 passed, 2 failed · lifecycle 7 passed, 6 failed
+      red: ✗ …and its n 1 is judged fresh, not a dup of the old leg's n 1 (receipt windows are per leg) — {"type":"phrase-receipt","n":1,"circle":"drum
+      red: ✗ each new leg's n 1 is judged fresh, never a dup of a retired leg's n 1 — 1/20
+  ✓ KILLED release-noop — a dead leg's receipt window is released (blocker 1)
+      tables 9 passed, 3 failed · lifecycle 8 passed, 5 failed
+      red: ✗ after each leg died, no receipt window is left: 0 legs (was 1,000 before the repair) — {"legs":1000,"receipts":1000,"gens":1,"bars":1,"cla
+      red: ✗ after 120 closed legs, no receipt window is left (was 120 before the repair) — {"legs":120,"receipts":120,"gens":0,"bars":0,"claims":0}
+  ✓ KILLED release-on-close-off — a CLOSED leg releases its window (server.ts close path)
+      lifecycle 8 passed, 5 failed
+      red: ✗ after 120 closed legs, no receipt window is left (was 120 before the repair) — {"legs":120,"receipts":120,"gens":0,"bars":0,"claims":0}
+  ✓ KILLED release-on-takeover-off — a TAKEN-OVER leg releases its window (server.ts join takeover)
+      lifecycle 9 passed, 4 failed
+      red: ✗ after 20 takeovers, only the live leg keeps a window: 1 leg — {"legs":20,"receipts":20,"gens":0,"bars":0,"claims":0}
+  ✓ KILLED release-on-travel-off — a TRAVELLING leg releases its window in the world it left
+      lifecycle 10 passed, 3 failed
+      red: ✗ before travel: 2 legs (tk, tv); after: 1 — the traveller's window left with it — 2 → 2
+  ✓ KILLED release-on-expel-off — a KICKED leg releases its window (server.ts expel)
+      lifecycle 11 passed, 2 failed
+      red: ✗ before the kick: 2 legs; after: 1 — the expelled leg's window is released — 2 → 2
+  ✓ KILLED prune-age-off — claims on bars that have begun are pruned (blocker 1)
+      tables 9 passed, 3 failed · lifecycle 12 passed, 1 failed
+      red: ✗ once bar 1 has begun, the next phrase prunes it: 1 bar (bar 3), 1 claim — {"legs":1,"receipts":1,"gens":1,"bars":2,"claims":1001}
+      red: ✗ booking the whole horizon every bar for 2,000 bars holds at most H = 16 claimed bars (bars k+1 … k+16) — 2014
+      red: ✗ claimed bars stay unbegun and inside the horizon: at most H = 16 at any time (here a few) — max 42 bars, 42 claims
+  ✓ KILLED prune-gen-off — only the playable generations keep claims
+      tables 11 passed, 1 failed
+      red: ✗ gen 1's claim is gone; gen 2 (prev) keeps its own: 1 generation, 1 claim — {"legs":2,"receipts":2,"gens":2,"bars":2,"claims":2}
+  ✓ KILLED stale-silent — a drum gone quiet says for how long (found in the A1 demo)
+      client 27 passed, 1 failed
+      red: ✗ ten bars after its last one ended, a drum says so: 'quiet for 10 bars (27 s)' —     hand (bea, adam), bars 3–5: ..............T.  B...T.S.
+  ✓ KILLED stale-always — a drum still sounding carries no quiet note
+      client 26 passed, 2 failed
+      red: ✗ a drum still sounding (or queued) carries no 'quiet' note
+  ✓ KILLED keep-voices-off — the window keeps at most KEEP_VOICES drums (memory bound)
+      client 26 passed, 2 failed
+      red: ✗ the window keeps at most 16 drums, dropping the least recently struck — d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,
+  ✓ KILLED quiet-early — 'quiet' waits for the last queued step, then the window
+      mcpl 42 passed, 2 failed
+      red: ✗ …and not before the last queued step had its time (+ the quiet window) — -2363 ms after the last bar ended
+  ✓ KILLED end-silent — ending a played circle says so once, at once
+      mcpl 42 passed, 2 failed
+      red: ✗ ending the circle while it is being played says so once, at once — ["a drum circle near you began playing [drums] (240 BPM, 2/4): resident
+  ✓ KILLED look-no-circle — look() carries describeCircle: struck/queued pattern strings (§5)
+      mcpl 31 passed, 13 failed
+      red: ✗ the circle is described: tempo, meter, gen, initiator — You are "listener" in world "drummcpl-dp96ng" at (0.0, 0.0), ground height 0.00m, 
+      red: ✗ the listener's look shows the resident's pattern strings over the observed bars —   - [hand] drum: 1.0m E at (1.0, 0.0, 0.0) — drum "hand"
+  ✓ KILLED initiator-invented — no invented inheritance: an absent initiator is said plainly (carry 7)
+      mcpl 43 passed, 1 failed
+      red: ✗ once bob has left, look says exactly who may still change or end it — , 240 BPM, 2/4 in eighths (gen 1), started by bob /   count-in by bo
+  ✓ KILLED tool-stale-voicegen — the tool reads the drum's CURRENT voiceGen; the resident never handles it (§5)
+      mcpl 39 passed, 5 failed
+      red: ✗ after the drum is retuned (voiceGen bump), the tool reads the new voiceGen for you — voiceGen 1→2: refused by the world: stale voice gener
+  ✓ KILLED tool-refusal-as-accept — the tool reports a refusal as a refusal, with the world's reason
+      mcpl 40 passed, 4 failed
+      red: ✗ a non-initiator's bar 0 inside the count-in is refused, with the world's reason — accepted: "hand" bar undefined of circle drums (gen 1), 
+      red: ✗ a second passage for a bar already claimed is refused by name, never swapped in — accepted: "hand" bar undefined of circle drums (gen 1), 
+
+65/65 mutants killed; control green

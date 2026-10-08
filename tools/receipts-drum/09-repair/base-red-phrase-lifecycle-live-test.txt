@@ -1,0 +1,89 @@
+# base 83ea82c + tools/phrase-lifecycle-live-test.ts from the repair
+[drum-scratch] owned world up: http://127.0.0.1:22234 pid=11660 nonce=98ea06db-4ac6-47bc-a6b4-5100b9905ce4 dir=$DRUM_SCRATCH_ROOT\2026-10-08T03-06-01-836Z-base-lifecycle-98ea06db
+
+the phrase tables on the product path — world "drumlife-kd709m"
+
+  ✗ the debug request answers with table sizes (DRUM_PHRASE_STATS=1)
+1. 120 legs join, play, and CLOSE
+  ✓ all 120 hits accepted
+  ✗ after 120 closed legs, no receipt window is left (was 120 before the repair) — {"legs":null,"receipts":null,"gens":null,"bars":null,"claims":null}
+
+2. 20 TAKEOVERS of one identity
+  ✓ each new leg's n 1 is judged fresh, never a dup of a retired leg's n 1
+  ✗ after 20 takeovers, only the live leg keeps a window: 1 leg — {"legs":null,"receipts":null,"gens":null,"bars":null,"claims":null}
+
+3. a leg TRAVELS to another world
+  ✗ before travel: 2 legs (tk, tv); after: 1 — the traveller's window left with it — NaN → NaN
+
+4. a leg is KICKED
+  ✗ before the kick: 2 legs; after: 1 — the expelled leg's window is released — NaN → NaN
+
+5. a long-running circle: one player keeps booking two bars ahead for 40 bars
+  ✓ the player kept the circle going: passages accepted, ~20 of them
+  ✗ claimed bars stay unbegun and inside the horizon: at most H = 16 at any time (here a few) — max NaN bars, NaN claims
+  ✓ a resend of the last n still returns the original receipt, marked dup
+  ✓ the same bars under a new n are still refused by name: the slot is taken
+
+6. everyone leaves
+  ✗ with every player gone, no receipt window is left — {"legs":null,"receipts":null,"gens":null,"bars":null,"claims":null}
+  ✓ the admin's verbs drew no refusals
+
+6 passed, 7 failed
+[drum-scratch] receipt {
+  "label": "base-lifecycle",
+  "world": "$DRUM_SCRATCH_ROOT\\2026-10-08T03-06-01-836Z-base-lifecycle-98ea06db\\worlds",
+  "scratchDir": "$DRUM_SCRATCH_ROOT\\2026-10-08T03-06-01-836Z-base-lifecycle-98ea06db",
+  "port": 22234,
+  "origin": "http://127.0.0.1:22234",
+  "pid": 11660,
+  "nonce": "98ea06db-4ac6-47bc-a6b4-5100b9905ce4",
+  "mutant": null,
+  "startedAt": "2026-10-08T03:06:01.836Z",
+  "endedAt": "2026-10-08T03:06:43.564Z",
+  "identity": {
+    "ours": true,
+    "reason": "nonce echoed"
+  },
+  "childExited": true,
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "portClosed": true,
+  "portProbe": true,
+  "scratchWorld": "preserved as a test artifact (never deleted by this harness)",
+  "library": "$DRUM_SCRATCH_ROOT\\2026-10-08T03-06-01-836Z-base-lifecycle-98ea06db\\library",
+  "envKeys": [
+    "AGENT_TOKENS_PATH",
+    "APPDATA",
+    "COMSPEC",
+    "ComSpec",
+    "DRUM_PHRASE_STATS",
+    "EIDOVERSE_DIR",
+    "EIDO_BOOT_NONCE",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "JOIN_TOKEN",
+    "LOCALAPPDATA",
+    "OPT_DIR",
+    "PATH",
+    "PATHEXT",
+    "PORT",
+    "Path",
+    "SKIP_OPT_SWEEP",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "SystemDrive",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "WINDIR",
+    "WORLDS_DIR",
+    "WORLD_ADMIN",
+    "WORLD_INSTANCE_NONCE",
+    "windir"
+  ]
+}
+exit 1

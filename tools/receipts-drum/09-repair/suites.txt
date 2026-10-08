@@ -1,0 +1,15 @@
+# head 4f9b459 — every suite
+circle-test            61 passed, 0 failed
+circle-tag-test        11 passed, 0 failed
+hydration-test         30 passed, 0 failed
+phrase-test            37 passed, 0 failed  (policy PROVISIONAL_TEST_VALUE: L 150, F 50, H 16)
+drum-client-test       28 passed, 0 failed
+phrase-identity-test   7 passed, 0 failed
+phrase-tables-test     12 passed, 0 failed
+circle-live            27 passed, 0 failed
+comptest               36 passed, 0 failed
+hydr-live              15 passed, 0 failed
+phrase-live            29 passed, 0 failed
+phrase-lifecycle       13 passed, 0 failed
+drum-mcpl              44 passed, 0 failed
+drum-probe             20 passed, 0 failed

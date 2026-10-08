@@ -80,7 +80,8 @@ export const MUTANTS = [
     file: 'server/phrases.ts', find: 'if (win.size >= policy.RECEIPT_WINDOW && n < Math.min(...win.keys())) return send(refuse("too old to verify"));', replace: '',
     tests: ['phrase-live'], expectRed: ['too old to verify'] },
   { id: 'slots-off', seam: 'one planned phrase per (author, voice, gen, bar); overlap refuses whole (§2.3)',
-    file: 'server/phrases.ts', find: 'const taken = claims.find((k) => T.slots.has(k));', replace: 'const taken = undefined;',
+    // re-pointed in the repair round: the string-keyed check it targeted was replaced by tuple lookups
+    file: 'server/phrases.ts', find: 'for (let b = j.bar; b < j.bar + j.bars; b++) if (byBar?.get(b)?.has(key)) { taken = b; break; }', replace: '',
     tests: ['phrase-live'], expectRed: ['never swapped in', 'MIDDLE bar is refused whole'] },
   { id: 'relay-to-sender', seam: 'the relay excludes the sender; the sender schedules from its receipt (§2.3)',
     file: 'server/phrases.ts', find: 'if (relay) w.broadcast(relay, c);', replace: 'if (relay) w.broadcast(relay);',

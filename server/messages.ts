@@ -24,7 +24,7 @@ import { simSnapshot } from "../shared/sim.js";
 import { worlds, forkWorld, type World, type Client } from "./world.ts";
 import { pendingSnaps } from "./routes.ts";
 import { globalBans, saveGlobalBans } from "./moderation.ts";
-import { handlePhrase } from "./phrases.ts";
+import { handlePhrase, phraseTableStats } from "./phrases.ts";
 
 // ---- whispers: held-in-memory machinery (moved with its only writers) ------
 // join's held-whisper delivery imports these back — one-way, like
@@ -112,6 +112,13 @@ export const MESSAGES: Record<string, (ctx: MsgCtx, msg: any) => void> = {
       // recompute), and any client's "what does the sequencer think"
       ws.send(JSON.stringify({ type: "debug", reqId: msg.reqId ?? null,
         sim: simSnapshot(c.world.sim) }));
+      return;
+    }
+    if (msg.phrases && process.env.DRUM_PHRASE_STATS === "1") {
+      // the drum circle's phrase tables, SIZES only (no receipt, id or
+      // pattern), for the lifecycle test's product path. Off unless the
+      // scratch harness sets the flag; a production sequencer never answers.
+      ws.send(JSON.stringify({ type: "debug", reqId: msg.reqId ?? null, phrases: phraseTableStats(c.world) }));
       return;
     }
     if (msg.behavior != null) {

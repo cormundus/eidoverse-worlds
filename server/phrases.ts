@@ -24,10 +24,30 @@
 // reset on an entity, so a dedupe key can never collide across an end and a
 // restart either. Nothing here survives a process restart, and nothing here
 // claims exactly-once across one (§4.2).
-import { judgePlanned, judgeLive, DRUM_POLICY } from "../shared/circle.js";
+//
+// BOUNDED, and keyed by STRUCTURE (Mica's packet review, 2026-10-07):
+//   - identities are nested maps or a JSON tuple, never delimiter-joined
+//     strings: ids may contain any character, and ('a|b','c') and ('a','b|c')
+//     must stay two claims;
+//   - a leg's receipt window is RELEASED when the leg dies (close, expel,
+//     takeover, travel: server.ts calls releaseLeg). A dead leg can never send
+//     again, and a returning identity is a new leg with a new window;
+//   - planned-slot claims are PRUNED by age: a bar that has begun can never be
+//     admitted again (a named bar needs F ahead, "next" needs L), so its claims
+//     can never decide another judgement. Only the playable generations
+//     (current, and prev while its span lives) keep any. Slots are NOT released
+//     on a leave: they are per AUTHOR, and a takeover's old leg keeps sounding
+//     (no leave is broadcast), so a released claim could be taken twice.
+import { judgePlanned, judgeLive, DRUM_POLICY, gridForGen, barStart } from "../shared/circle.js";
 
 type Receipt = Record<string, unknown>;
-type Tables = { born: unknown; receipts: Map<string, Map<number, Receipt>>; slots: Set<string> };
+type Tables = {
+  born: unknown;
+  receipts: Map<string, Map<number, Map<number, Receipt>>>;   // client id → legGen → n → receipt
+  slots: Map<number, Map<number, Set<string>>>;                // gen → bar → claim (JSON [author, voice])
+};
+/** One planned claim's identity within a (gen, bar): a JSON tuple, injective for any strings. */
+const claimKey = (author: string, voice: string) => JSON.stringify([author, voice]);
 type PhraseClient = {
   id: string; sub?: string; spectator: boolean; gen?: number; legGen?: number;
   world: { state: { entities: Record<string, any> }; broadcast(msg: unknown, except?: unknown): void } | null;
@@ -40,11 +60,50 @@ const PHRASE_BYTES_MAX = 4096;
 /** Drop a circle's dedupe and slot tables (circle-set end, entity remove). */
 export function clearCircleTables(w: object, id: string) { byWorld.get(w)?.delete(id); }
 
+/** A leg died (close, expel, takeover, travel): release its receipt window in
+ *  every circle of that world. The leg is (id, legGen) — the same identity the
+ *  window was stored under. */
+export function releaseLeg(w: object | null | undefined, leg: { id: string; legGen?: number; gen?: number }) {
+  const m = w ? byWorld.get(w) : undefined;
+  if (!m) return;
+  const lg = leg.legGen ?? leg.gen ?? 0;
+  for (const t of m.values()) {
+    const legs = t.receipts.get(leg.id);
+    if (!legs) continue;
+    legs.delete(lg);
+    if (!legs.size) t.receipts.delete(leg.id);
+  }
+}
+
+/** Drop every claim that can never decide a judgement again: generations that
+ *  are no longer playable, and bars that have begun. */
+function pruneSlots(T: Tables, cbag: any, now: number) {
+  for (const [gen, bars] of T.slots) {
+    const g = cbag && (gen === cbag.gen || gen === cbag.prev?.gen) ? gridForGen(cbag, gen) : null;
+    if (!g) { T.slots.delete(gen); continue; }
+    for (const bar of bars.keys()) if (barStart(g, bar) <= now) bars.delete(bar);
+    if (!bars.size) T.slots.delete(gen);
+  }
+}
+
+/** Sizes only — never a receipt, an id or a pattern. For the lifecycle test,
+ *  through the debug request, and only when DRUM_PHRASE_STATS=1 (messages.ts). */
+export function phraseTableStats(w: object | null | undefined) {
+  const out: Record<string, { legs: number; receipts: number; gens: number; bars: number; claims: number }> = {};
+  for (const [id, t] of (w ? byWorld.get(w) : undefined) ?? []) {
+    let legs = 0, receipts = 0, bars = 0, claims = 0;
+    for (const byLeg of t.receipts.values()) for (const win of byLeg.values()) { legs++; receipts += win.size; }
+    for (const byBar of t.slots.values()) for (const set of byBar.values()) { bars++; claims += set.size; }
+    out[id] = { legs, receipts, gens: t.slots.size, bars, claims };
+  }
+  return out;
+}
+
 function tablesFor(w: object, id: string, born: unknown): Tables {
   let m = byWorld.get(w);
   if (!m) byWorld.set(w, (m = new Map()));
   let t = m.get(id);
-  if (!t || t.born !== born) m.set(id, (t = { born, receipts: new Map(), slots: new Set() }));
+  if (!t || t.born !== born) m.set(id, (t = { born, receipts: new Map(), slots: new Map() }));
   return t;
 }
 
@@ -67,9 +126,12 @@ export function handlePhrase(c: PhraseClient, ws: { send(d: string): void }, msg
   if (!ent) return send(refuse(`no circle "${circle}" here`));
 
   const T = tablesFor(w, circle, ent.born);
-  const legKey = `${c.id}|${c.legGen ?? c.gen ?? 0}`;
-  let win = T.receipts.get(legKey);
-  if (!win) T.receipts.set(legKey, (win = new Map()));
+  pruneSlots(T, ent.comp?.circle, now);
+  let byLeg = T.receipts.get(c.id);
+  if (!byLeg) T.receipts.set(c.id, (byLeg = new Map()));
+  const lg = c.legGen ?? c.gen ?? 0;
+  let win = byLeg.get(lg);
+  if (!win) byLeg.set(lg, (win = new Map()));
   const prior = win.get(n);
   if (prior) return send({ ...prior, dup: true });
   if (win.size >= policy.RECEIPT_WINDOW && n < Math.min(...win.keys())) return send(refuse("too old to verify"));
@@ -104,12 +166,18 @@ export function handlePhrase(c: PhraseClient, ws: { send(d: string): void }, msg
     const j: any = judgePlanned(cbag, inst, msg, { now, isInitiator, policy });
     if (!j.ok) receipt = refuse(j.why);
     else {
-      const claims: string[] = [];
-      for (let b = j.bar; b < j.bar + j.bars; b++) claims.push(`${c.id}|${voice}|${msg.gen}|${b}`);
-      const taken = claims.find((k) => T.slots.has(k));
-      if (taken) receipt = refuse(`a planned slot is already taken: bar ${taken.split("|").pop()} of your "${voice}" — refused, never swapped in`);
+      const key = claimKey(c.id, voice);
+      let byBar = T.slots.get(msg.gen);
+      let taken: number | undefined;
+      for (let b = j.bar; b < j.bar + j.bars; b++) if (byBar?.get(b)?.has(key)) { taken = b; break; }
+      if (taken !== undefined) receipt = refuse(`a planned slot is already taken: bar ${taken} of your "${voice}" — refused, never swapped in`);
       else {
-        for (const k of claims) T.slots.add(k);
+        if (!byBar) T.slots.set(msg.gen, (byBar = new Map()));
+        for (let b = j.bar; b < j.bar + j.bars; b++) {
+          let claims = byBar.get(b);
+          if (!claims) byBar.set(b, (claims = new Set()));
+          claims.add(key);
+        }
         receipt = { ...base, ok: true, bar: j.bar, bars: j.bars, acceptedAtServerMs: now, scheduledAtServerMs: j.scheduledAtServerMs };
         relay = { type: "phrase", circle, gen: msg.gen, voice, voiceGen: msg.voiceGen, bar: j.bar, bars: j.bars, pattern: j.pattern,
           ...(j.velocity ? { velocity: j.velocity } : {}), author: c.id, legGen, n };
@@ -117,11 +185,6 @@ export function handlePhrase(c: PhraseClient, ws: { send(d: string): void }, msg
     }
   }
   store(receipt);
-  // bound the claims: only the playable generations' bars can matter
-  if (T.slots.size > 2048 && cbag) {
-    const keep = new Set([String(cbag.gen), String(cbag.prev?.gen)]);
-    for (const k of T.slots) if (!keep.has(k.split("|")[2])) T.slots.delete(k);
-  }
   send(receipt);
   if (relay) w.broadcast(relay, c);   // everyone except the sender (world.ts broadcast)
 }

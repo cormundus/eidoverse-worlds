@@ -21,10 +21,12 @@ const PRELOAD = join(ROOT, 'tools', 'drum-mutant-preload.mjs');
 const only = process.argv.slice(2);
 
 const PURE = { circle: 'tools/circle-test.ts', tag: 'tools/circle-tag-test.ts', hydr: 'tools/hydration-test.ts',
-  phrase: 'tools/phrase-test.ts', client: 'tools/drum-client-test.ts' };
+  phrase: 'tools/phrase-test.ts', client: 'tools/drum-client-test.ts',
+  ident: 'tools/phrase-identity-test.ts', tables: 'tools/phrase-tables-test.ts' };
 const LIVE = { live: ['tools/circle-live-test.ts', []], comptest: ['tools/comptest.ts', []],
   'hydr-live': ['tools/hydration-live-test.ts', ['--env', 'FOLD_EVERY=1']],
-  'phrase-live': ['tools/phrase-live-test.ts', []], mcpl: ['tools/drum-mcpl-test.ts', []] };
+  'phrase-live': ['tools/phrase-live-test.ts', []], mcpl: ['tools/drum-mcpl-test.ts', []],
+  lifecycle: ['tools/phrase-lifecycle-live-test.ts', ['--env', 'DRUM_PHRASE_STATS=1', '--env', 'WORLD_ADMIN=admin']] };
 // the browser probe: Node drives Chrome (Bun's Windows child_process cannot carry
 // Playwright's pipe transport), and the probe starts its own owned world on Bun
 const PROBE = 'tools/drum-probe.ts';
@@ -50,7 +52,7 @@ function runTest(test, mutant) {
 let ok = true, controlOk = true;
 console.log('\ncontrol (preload active, no mutant):');
 const wanted = new Set(MUTANTS.filter((x) => !only.length || only.includes(x.id)).flatMap((x) => x.tests));
-const controls = ['circle', 'tag', 'hydr', 'phrase', 'client', 'live', 'comptest', 'hydr-live', 'phrase-live', 'mcpl', 'probe']
+const controls = ['circle', 'tag', 'hydr', 'phrase', 'client', 'ident', 'tables', 'live', 'comptest', 'hydr-live', 'phrase-live', 'lifecycle', 'mcpl', 'probe']
   .filter((t) => !only.length || wanted.has(t));
 if (controls.includes('probe') && !process.env.SFU_TEST_CHROME) {
   console.log('  ✗ probe: SFU_TEST_CHROME is not set — the browser mutants cannot run (refusing a silent skip)');

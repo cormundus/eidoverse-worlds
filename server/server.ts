@@ -31,6 +31,7 @@ import { warmBoxes, worldLibs } from "./boxes.ts";
 import { route, avatarRoster } from "./routes.ts";
 import { registerSystem, startTick } from "./tick.ts";
 import { MESSAGES, pendingWhispers, whisperKey } from "./messages.ts";
+import { releaseLeg } from "./phrases.ts";   // a dead leg's drum receipt window goes with it (close, expel, takeover, travel)
 import { LIMITS } from "./limits.ts";
 import { onEntryCommitted } from "./events.ts";
 import { defsFingerprint } from "./defs.ts";
@@ -228,6 +229,7 @@ function expel(w: World, target: Client, why: string) {
   if (wasEmbodied && target.lastPose) w.rememberPose(target.id, target.lastPose); // they may be back
   target.superseded = true;   // the close path must not double-handle this body
   w.clients.delete(target);
+  releaseLeg(w, target);
   clients.delete(target.ws);
   target.world = null;
   target.ws.close?.(4006, "removed by moderation");
@@ -576,6 +578,7 @@ function installJoin(c: Client, w: World) {
           other.superseded = true;
           retiredGen = other.gen;
           w.clients.delete(other);
+          releaseLeg(w, other);
           clients.delete(other.ws);
           other.ws.close?.(4002, "session takeover");
           console.log(`[world:${w.name}] ${c.id}/${c.surface} takeover — gen ${other.gen} retired`);
@@ -721,6 +724,7 @@ const server = Bun.serve({
         }
         if (c.world) {
           c.world.clients.delete(c);
+          releaseLeg(c.world, c);
           // AUX LEG DEATH IS AN EVENT (r-review): aux legs ride the spectator
           // path, so their close used to broadcast NOTHING — voiceCapable on
           // every other client kept the dead leg's gen forever, and each say
@@ -809,6 +813,7 @@ const server = Bun.serve({
           // state the 4008 orphan refusal exists to prevent.
           if (c.world) {
             c.world.clients.delete(c);
+            releaseLeg(c.world, c);
             retireAuxLeg(c.world, c);
             if (!c.spectator) {
               c.world.broadcast({ type: "leave", id: c.id, gen: c.legGen ?? c.gen });

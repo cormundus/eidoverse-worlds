@@ -25,7 +25,7 @@
 // @ts-nocheck
 import fs from "node:fs";
 import path from "node:path";
-import { scratch, copyTree, readLF } from "./common.ts";
+import { scratch, copyTree, readLF, linkInto } from "./common.ts";
 // [name, file, find, replace, rows it must turn red]: the mutation each row exists to catch
 const MUTANTS: [string, string, string, string, string[]][] = [
   ["unpublished lines: publish only when the authority returned (no finally)", "server/worldlog.ts", "    finally { this.publish(from, held); }\n    const o = txnOutcome(live, from, { threw: threw !== null, error: threw, refused: !!r && typeof r === \"object\" && r.ok === false, wedgedBefore });\n    if (threw !== null) {\n      console.error(", "    if (threw === null) this.publish(from, held);\n    const o = txnOutcome(live, from, { threw: threw !== null, error: threw, refused: !!r && typeof r === \"object\" && r.ok === false, wedgedBefore });\n    if (threw !== null) {\n      console.error(", ["T1"]],
@@ -62,7 +62,7 @@ if (process.argv.includes("--mutants")) {
     for (const dir of ["server", "shared", "client", "mcpl"]) copyTree(path.join(ENGINE, dir), path.join(d, dir));
     fs.mkdirSync(path.join(d, "tools/protocol"), { recursive: true });
     for (const f of ["common.ts", "txn-check.ts"]) fs.copyFileSync(path.join(ENGINE, "tools/protocol", f), path.join(d, "tools/protocol", f));
-    fs.copyFileSync(path.join(ENGINE, "package.json"), path.join(d, "package.json")); fs.symlinkSync(path.join(ENGINE, "node_modules"), path.join(d, "node_modules"), "junction");
+    fs.copyFileSync(path.join(ENGINE, "package.json"), path.join(d, "package.json")); linkInto(path.join(ENGINE, "node_modules"), path.join(d, "node_modules"));
     const f = path.join(d, file); const src = readLF(f);
     if (src.split(find).length !== 2) { bad++; console.log(`FAIL mutant '${name}': its text isn't found exactly once in ${file} (the fix moved?)`); continue; }
     fs.writeFileSync(f, src.replace(find, repl));

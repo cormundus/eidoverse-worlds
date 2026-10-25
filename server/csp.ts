@@ -41,9 +41,13 @@ export const ORRERY_ORIGIN = "https://orrery.animalabs.ai";
 /** sha256 CSP sources for every inline (src-less) <script> in an HTML document, as the browser hashes them. */
 export function inlineScriptHashes(html: string): string[] {
   const out: string[] = [];
-  for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
-    if (/\bsrc\s*=/i.test(m[1])) continue;
-    out.push(`'sha256-${createHash("sha256").update(m[2], "utf8").digest("base64")}'`);
+  // a closing tag may carry attributes the parser ignores ("</script foo>"; but "</script-z>" and "</scripts>" are not end tags: the name must end at a space, / or >); only a real src attribute (not data-src) makes
+  // a script external (tools/csp-test.ts CSP5–7)
+  for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi)) {
+    if (/(?:^|\s)src\s*=/i.test(m[1])) continue;
+    // the browser hashes the text the parser made, and the parser turns CRLF and lone CR into LF (HTML §13.2.3.5): hashing
+    // the raw bytes of a CRLF copy refuses every inline script on the page (tools/csp-test.ts)
+    out.push(`'sha256-${createHash("sha256").update(m[2].replace(/\r\n?/g, "\n"), "utf8").digest("base64")}'`);
   }
   return [...new Set(out)];
 }

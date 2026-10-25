@@ -102,7 +102,7 @@
   "bare-wait": 28
  },
  "tools/protocol/shiplist-probe.ts": {
-  "bare-wait": 106
+  "bare-wait": 105
  },
  "tools/protocol/xss-probe.ts": {
   "bare-wait": 18

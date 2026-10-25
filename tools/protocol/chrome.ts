@@ -77,6 +77,14 @@ export function platformArgs(platform: NodeJS.Platform = process.platform): stri
     // fork exp/mac-gl runs 39853908965 and 39854960274). Not --disable-frame-rate-limit too: unbounded frames starved party B2
     // on the 3-core runner (run 39866082490); vsync alone ran the lane fastest (614 s, run 39873667367)
     ...(platform === "darwin" ? ["--use-mock-keychain", "--disable-gpu-vsync"] : []),
+    // Windows: a GPU-less host (GitHub's windows-latest) has no WebGPU adapter, and current Chrome no longer falls back to
+    // SwiftShader for WebGL on its own: getContext() returned null and the page threw in three's WebGLExtensions at boot,
+    // "the page never booted" in every browser suite (10-23, fork run 39998895713, browser.events.jsonl). This allows the
+    // software fallback; a host with a GPU keeps its GPU. --use-angle=d3d11 (Chrome's default backend on a Windows GPU) makes
+    // the fallback fast enough: client 205/0 in 60-68 s; without it, or with ANGLE's swiftshader backend, the suite ran past
+    // its 300 s. Both flags are needed: d3d11 alone never booted. --disable-gpu-vsync changed nothing here (62 vs 60 s).
+    // Fork probe runs 40016549160, 40017129818 and the 4-way matrix before them (10-23)
+    ...(platform === "win32" ? ["--enable-unsafe-swiftshader", "--use-angle=d3d11"] : []),
     ...(process.env.EIDO_CHROME_ARGS ?? "").split(/\s+/).filter(Boolean),
   ];
 }
@@ -162,8 +170,15 @@ export async function cdpPage({ args = [] }: { args?: string[] } = {}) {
       return r.result.value;
     };
     const goto = async (url: string) => {
-      await cdp.send("Page.navigate", { url });
-      await until(`the page loaded ${url}`, async () => (await evaluate(`location.href.startsWith(${JSON.stringify(url)}) && document.readyState === "complete"`)) || null, { ms: 30_000 });
+      // A navigation can be lost to Chrome restarting its network service just after launch (windows-latest, 10-23: the page
+      // sat on about:blank for 30 s). Page.navigate says so in errorText; say it, and ask once more.
+      const loaded = async () => (await evaluate(`location.href.startsWith(${JSON.stringify(url)}) && document.readyState === "complete"`)) || null;
+      const nav: any = await cdp.send("Page.navigate", { url });
+      if (nav?.errorText) {
+        console.error(`[cdpPage] navigation to ${url} failed (${nav.errorText}); asking once more`);
+        await cdp.send("Page.navigate", { url });
+      }
+      await until(`the page loaded ${url}`, loaded, { ms: 30_000 });
     };
     return { cdp, evaluate, goto, errors, close };
   } catch (e) { await close(); throw e; }

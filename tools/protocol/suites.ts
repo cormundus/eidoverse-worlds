@@ -45,6 +45,7 @@ export const SUITES: [string, string, number][] = [ // name, file, tail lines to
   ["sweep", "sweep.ts", 4],
   ["oracle", "import-v1/snapshot-oracle.ts", 2], // owner 10-15: the translator against the OLD ENGINE — every old world whose snapshot.json is a complete fold of its log, compared with its translation (and the server's lifted load)
   ["inplace", "inplace-check.ts", 1],   // R 10-17 13:36: translate <world> in place (the name and links kept, the old log beside it as log.original.jsonl), verified before the swap, everything put back on any failure
+  ["version-route", "../version-route-test.ts", 1],   // its own suite, not client-tools' 15 s import-only run: a kill there left its nonces (#260 review)
   ["migrate-identities", "migrate-identities-check.ts", 1],   // migrate-identities.ts: one id per person everywhere (actors, role keys, say.to, capability, sponsor, the moderator log), a gate that reads the two logs side by side, refused twice
   ["oldworlds", "../oldworlds-test.ts", 1], // owner 10-15: an old-format world is found and named at boot (the exact translate command), and a visitor is told in plain words             // the old-world importer (tools/protocol/import-v1/) on every local old world log + her dialect-3 goldens + pins
   ["browser", "browser-check.ts", 1],   // the shared core imported by headless Chromium, byte-for-byte with bun
@@ -61,6 +62,7 @@ export const SUITES: [string, string, number][] = [ // name, file, tail lines to
   ["onepose", "onepose-check.ts", 1], // audit 10-22 #7: one worldPose (simlayer's and hierarchy's agree bit for bit) and one set of quaternion functions (shared/rot.js)
   ["dismount-height", "../dismount-height-test.ts", 1], // review of PR #260 (localbody.js:151): standing up keeps the height I'm let go at (vacated.at, a socket exit, a leave clip's end)
   ["latestread", "../latestread-test.ts", 1], // the panels' paced re-read and the History retry's back-off (latestread.js, backoff.js); it existed, but no lane ran it
+  ["csp", "../csp-test.ts", 0.5],          // the page's script-src hashes are the browser's: a CRLF copy of index.html still boots (CI windows 10-23)
   ["build-gate", "../build-gate-test.ts", 1], // edit mode is gated at the chokepoint, never trapping a demoted builder (revived D6)
   ["capsule-recovery", "../capsule-recovery-test.mjs", 1], // a remote's capsule fallback: bounded retries, the identity guard across takeovers (revived D6)
   ["debug-tabs", "../debug-tabs-test.ts", 1], // the debug window builds only the chosen tab's groups (revived D6)
@@ -169,7 +171,7 @@ export const SUITES: [string, string, number][] = [ // name, file, tail lines to
   ["eidosim-v1", "import-v1/eidosim-v1-test.ts", 1], // the first eidosim's covenant tests, on the copy the importer keeps (house #260, importer I8)
   ["render-scene-import", "../render-scene-import-test.ts", 1], // #260 I464: server/render-scene.ts links (nothing serves it), and particles project through resolveParticles
   ["channelbox", "../channelbox-test.ts", 1], // #260 I242: the channel box through the real door; the rotate order is the viewer's (PROTOCOL §9.1), never sent
-  ["client-tools", "../run-client.ts --import-only", 14], // refactor plan 2 D5: every tools/*-{test,check} loads (a stub missing an export, a moved module); the full run is `bun tools/run-client.ts`
+  ["client-tools", "../run-client.ts --import-only --skip-suites", 14], // refactor plan 2 D5: every tools/*-{test,check} loads (a stub missing an export, a moved module); the full run is `bun tools/run-client.ts`
 ];
 
 // ---- lanes ----

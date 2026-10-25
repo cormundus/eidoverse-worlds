@@ -19,6 +19,7 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative, basename } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { SUITES, browserLauncher } from "./protocol/suites.ts";
+import { killSuiteAsync, killSuiteAtExit } from "./protocol/procgroup.ts";
 
 const ROOT = join(import.meta.dir, "..");
 const args = process.argv.slice(2);
@@ -59,6 +60,10 @@ for (const [, file] of SUITES) reached.add(rel(join(ROOT, "tools/protocol", file
 const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 for (const s of Object.values(pkg.scripts ?? {}) as string[]) for (const m of s.matchAll(/tools\/[\w./-]+/g)) reached.add(m[0]);
 const unreached = files.map(rel).filter((p) => !reached.has(p));
+// --skip-suites: the gate runs each of its own suites in full (a load error fails that suite), so loading them here
+// again is the same check twice; on windows-latest those 26 files, each run to the 15 s cap, were what pushed the lane
+// past its budget (358 s, 478 s, then >1010 s on three runs, 10-23)
+const gateSuite = new Map<string, string>(); for (const [n, file] of SUITES) gateSuite.set(rel(join(ROOT, "tools/protocol", file.split(" ")[0])), n);
 
 if (flag("--unreached")) {
   console.log(`${unreached.length} of ${files.length} test files are reached by no other runner (tools/protocol/run.ts, package.json):`);
@@ -74,20 +79,25 @@ const mcplDeps = existsSync(join(ROOT, "mcpl/node_modules"));
 const needsMcpl = (src: string) => /from\s+["'][^"']*\.\.\/mcpl\//.test(src) || /["'][^"']*mcpl\/[\w/-]+\.ts["']/.test(src);
 
 const live = new Set<number>();
-for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.on(sig, () => { for (const pid of live) { try { process.kill(-pid, "SIGKILL"); } catch { /* gone */ } } process.exit(130); });
+for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.on(sig, () => { for (const pid of live) killSuiteAtExit(pid); process.exit(130); });
 type Res = { file: string; kind: "pass" | "red" | "dead" | "timeout" | "env" | "skip" | "loaded" | "flaky"; why?: string; ms: number; tail?: string };
 const run = (file: string): Promise<Res> => new Promise((done) => {
   const t0 = performance.now(); const name = basename(file); const src = readFileSync(file, "utf8");
   if (!importOnly && SLOW[name] && !flag("--slow")) return done({ file, kind: "skip", why: `slow: ${SLOW[name]} (--slow runs it)`, ms: 0 });
+  if (importOnly && flag("--skip-suites") && gateSuite.has(rel(file))) return done({ file, kind: "skip", why: `the gate runs it in full as ${gateSuite.get(rel(file))}`, ms: 0 });
   if (needsMcpl(src) && !mcplDeps) return done({ file, kind: "env", why: "mcpl/node_modules missing: ln -s <a checkout with deps>/mcpl/node_modules mcpl/", ms: 0 });
   const ch = spawn("bun", [file], { cwd: ROOT, detached: true, env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" }, stdio: ["ignore", "pipe", "pipe"] });
   live.add(ch.pid!); let out = ""; let timedOut = false;
   ch.stdout.on("data", (d) => { out += d; }); ch.stderr.on("data", (d) => { out += d; });
-  const kill = () => { try { process.kill(-ch.pid!, "SIGKILL"); } catch { /* gone */ } };
+  // killSuiteAsync, not process.kill(-pid): a negative pid throws on Windows, so a child past its budget was never killed,
+  // its pipes stayed open, "close" never came and the lane wedged (client-tools, windows-latest, 10-23).
+  // On Windows a kill costs a process-table (WMI) query, so only a timed-out file pays it: sweeping after every one of
+  // 424 files, six at a time, swamped WMI and the run died (10-23). A finished file's debris goes with the gate's own sweep.
+  const kill = (exited = false) => { void killSuiteAsync(ch.pid!, "SIGKILL", process.platform, { exited }).catch(() => {}); };
   // SIGTERM first, so a test with an exit handler cleans up what it wrote; whatever is left a moment later is killed
-  const timer = setTimeout(() => { timedOut = true; try { process.kill(-ch.pid!, "SIGTERM"); } catch { /* gone */ } setTimeout(kill, 2000); }, TIMEOUT_S * 1000);
+  const timer = setTimeout(() => { timedOut = true; void killSuiteAsync(ch.pid!, "SIGTERM").catch(() => {}); setTimeout(() => kill(), 2000); }, TIMEOUT_S * 1000);
   ch.on("close", (code) => {
-    clearTimeout(timer); kill(); live.delete(ch.pid!);
+    clearTimeout(timer); if (process.platform !== "win32") kill(true); live.delete(ch.pid!);
     const ms = performance.now() - t0; const tail = out.trim().split("\n").slice(-3).join("\n");
     const dead = linkError(out);
     if (dead && /^error: Cannot find (?:module|package) '[^./]/.test(dead)) return done({ file, kind: "env", why: `a dependency isn't installed here: ${dead.slice(7)}`, ms, tail });
